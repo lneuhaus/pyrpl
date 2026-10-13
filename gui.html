@@ -1,0 +1,812 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="3. API manual" href="api.html"><link rel="prev" title="1. Installation" href="installation.html">
+        <link rel="prefetch" href="_static/logo.png" as="image">
+
+    <link rel="shortcut icon" href="_static/icon.ico"><!-- Generated with Sphinx 7.4.7 and Furo 2025.12.19 -->
+        <title>2. GUI instruments manual - pyrpl 0.9.9.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=fd3f3429" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #eeffcc;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">pyrpl 0.9.9.1 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="_static/logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">pyrpl 0.9.9.1 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">1. Installation</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">2. GUI instruments manual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">3. API manual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basics.html">4. Basics of the PyRPL Architecture</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="developer_guide/index.html">5. Notes for developers</a><input aria-label="Toggle navigation of 5. Notes for developers" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/contributing.html">5.1. Contributing to PyRPL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/fpga_compilation.html">5.2. Building the FPGA firmware</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/unittests.html">5.3. Unittests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/codingstyle.html">5.4. Coding style guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/codingworkflow.html">5.5. Workflow to submit code changes</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="developer_guide/api/index.html">5.6. API specifications from the moment of their development</a><input aria-label="Toggle navigation of 5.6. API specifications from the moment of their development" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/api/asynchronous/index.html">5.6.1. Requirements for an asynchronous interface compatible with python 3 asyncio</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/api/asynchronous/benchmark.html">5.6.2. Asynchronous sleep function and benchmarks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/api/spectrum.html">5.6.3. How a spectrum is computed in PyRPL</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/api/memory_tree.html">5.6.4. MemoryTree</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/api/attribute_and_module.html">5.6.5. Base classes Attributes and Module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/api/select_property.html">5.6.6. Starting to rewrite SelectAttribute/Property</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/api/acquisition_module.html">5.6.7. AcquisitionModule</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/api/lockbox.html">5.6.8. Lockbox</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/api/data_widget.html">5.6.9. DataWidget</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="developer_guide/dist/index.html">5.7. Distribution of pyrpl</a><input aria-label="Toggle navigation of 5.7. Distribution of pyrpl" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/dist/autodoc.html">5.7.1. Building the documentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/dist/executable.html">5.7.2. Building standalone applications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/dist/release.html">5.7.3. Preparing a release</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/sdcard.html">5.8. SD card preparation</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="gallery/index.html">Gallery of PyRPL usage examples</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="user_guide/index.html">User’s guide to PyRPL</a><input aria-label="Toggle navigation of User’s guide to PyRPL" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="user_guide/installation/index.html">Installation</a><input aria-label="Toggle navigation of Installation" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation/hardware_installation.html">Hardware installation for PyRPL</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation/pyrpl_installation.html">Installing PyRPL</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation/common_problems.html">Common installation problems</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation/user_dir.html">Directory for user data “PYRPL_USER_DIR”</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/tutorial/index.html">Quickstart Tutorial for PyRPL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/basics/index.html">Basics of PyRPL</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference_guide/index.html">Reference guide to PyRPL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_feedback.html">Feedback by PyRPL users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="publications.html">Publications about PyRPL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="thanks.html">Contributors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="thanks.html#funding-and-support">Funding and support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="thanks.html#about">About</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="_sources/gui.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="gui-instruments-manual">
+<h1><span class="section-number">2. </span>GUI instruments manual<a class="headerlink" href="#gui-instruments-manual" title="Link to this heading">¶</a></h1>
+<p>In this section, we show how to control the main modules of Pyrpl with the Graphical User Interface (GUI).</p>
+<section id="video-tutorial">
+<h2><span class="section-number">2.1. </span>Video tutorial<a class="headerlink" href="#video-tutorial" title="Link to this heading">¶</a></h2>
+<p>Get started by watching the video tutorial below on locking a Michelson
+interferometer with PyRPL. The video covers:</p>
+<ul class="simple">
+<li><p>how to set up the hardware for a typical Red Pitaya use case (interferometer locking)</p></li>
+<li><p>how to get started by <a class="reference internal" href="#start-gui-label"><span class="std std-ref">Starting the GUI</span></a></p></li>
+<li><p>how to use the <a class="reference internal" href="#scope-widget-label"><span class="std std-ref">Scope Widget</span></a> and Arbitrary Signal Generator GUI</p></li>
+<li><p>how to set up and configure the <a class="reference internal" href="#lockbox-widget-label"><span class="std std-ref">Lockbox Widget</span></a></p></li>
+<li><p>how to measure a transfer function with the <a class="reference internal" href="#na-widget-label"><span class="std std-ref">Network Analyzer Widget</span></a></p></li>
+</ul>
+<p><a class="reference external" href="https://www.youtube.com/watch?v=WnFkz1adhgs">Watch the video tutorial on YouTube</a>.</p>
+</section>
+<section id="starting-the-gui">
+<span id="start-gui-label"></span><h2><span class="section-number">2.2. </span>Starting the GUI<a class="headerlink" href="#starting-the-gui" title="Link to this heading">¶</a></h2>
+<p>If you use the <a class="reference external" href="https://github.com/pyrpl-fpga/pyrpl/releases/latest">Windows or Linux binaries</a>,
+just launch the executable and the GUI should start. Passing the command-line
+argument <code class="code docutils literal notranslate"><span class="pre">--help</span></code> to the executable shows a list of optional
+command-line arguments.</p>
+<p>If instead you have <a class="reference internal" href="user_guide/installation/pyrpl_installation.html#installation-from-source"><span class="std std-ref">a source code installation</span></a>,
+then you can either launch PyRPL from a terminal with</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pyrpl<span class="w"> </span>example_filename
+</pre></div>
+</div>
+<p>or execute the following code block in Python:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># import pyrpl library</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pyrpl</span>
+
+<span class="c1"># create a Pyrpl object and store the configuration in a file &#39;example_filename.yml&#39;</span>
+<span class="c1"># by default, the parameter &#39;gui&#39; is set to True</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">pyrpl</span><span class="o">.</span><span class="n">Pyrpl</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="s1">&#39;example_filename&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you are using the file ‘example_filename.yml’ for the first time, a screen will pop-up
+asking you to choose among the different RedPitayas connected to your local network. After that,
+the main Pyrpl widget should appear:</p>
+<a class="reference internal image-reference" href="_images/pyrpl_widget.jpg"><img alt="The main pyrpl widget" class="align-center" src="_images/pyrpl_widget.jpg" style="width: 60%;" />
+</a>
+<p>The main pyrpl widget is initially empty, however, you can use the “modules” menu to populate it
+with module widgets. The module widgets can be closed or reopened at any time, docked/undocked
+from the main module window by drag-and-drop on their sidebar, and their position on screen will be
+saved in the config file for the next startup.</p>
+<p>We explain the operation of the most useful module widgets in the following sections.</p>
+</section>
+<section id="a-typical-module-widget-pid-module">
+<span id="typical-widget-label"></span><h2><span class="section-number">2.3. </span>A typical module widget: PID module<a class="headerlink" href="#a-typical-module-widget-pid-module" title="Link to this heading">¶</a></h2>
+<p>The image below shows a typical module widget, here for the PID modules.</p>
+<a class="reference internal image-reference" href="_images/pid_widget.jpg"><img alt="A typical module widget" class="align-center" src="_images/pid_widget.jpg" style="width: 100%;" />
+</a>
+<p id="module-pyrpl.widgets.module_widgets.base_module_widget">The basic functionality of all module widgets are inherited from the base
+class <code class="xref py py-class docutils literal notranslate"><span class="pre">ModuleWidget</span></code>.</p>
+<p>A module widget is delimited by a dashed-line (a QGroupBox). The following
+menu is available on the top part of each ModuleWidget, directly behind the
+name of the module (e.g. <code class="code docutils literal notranslate"><span class="pre">pid0</span></code>, <code class="code docutils literal notranslate"><span class="pre">pid1</span></code>, …). Right click on
+the item (e.g. <code class="code docutils literal notranslate"><span class="pre">.:Load:.</span></code>, <code class="code docutils literal notranslate"><span class="pre">.:Save:.</span></code>, …) to access the associated
+submenu:</p>
+<ul class="simple">
+<li><p><code class="code docutils literal notranslate"><span class="pre">.:Load:.</span></code> Loads the state of the module from a list of previously saved states.</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">.:Save:.</span></code> Saves the current state under a given state name.</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">.:Erase:.</span></code> Erases one of the previously saved states.</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">.:Edit:.</span></code> Opens a text window to edit the yml code of a state.</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">.:Hide/Show:.</span></code> Hides or shows the content of the module widget.</p></li>
+</ul>
+<p>Inside the module widget, different attribute values can be manipulated using
+the shown sub-widgets (e.g. <code class="code docutils literal notranslate"><span class="pre">input</span></code>, <code class="code docutils literal notranslate"><span class="pre">setpoint</span></code>, <code class="code docutils literal notranslate"><span class="pre">max_voltage</span></code>, …). The
+modifications will take effect immediately. Only the module state
+<code class="code docutils literal notranslate"><span class="pre">&lt;current</span> <span class="pre">state&gt;</span></code> is affected by these changes. Saving the state under
+a different name only preserves the state at the moment of saving for later
+retrieval.</p>
+<p>At the next startup with the same config file, the :code:&lt;current state&gt; of
+all modules is loaded.</p>
+<p>If a module-widget is grayed out completely, it has been reserved by another,
+higher-level module whose name appears in parentheses after the name of the
+module (e.g. <code class="code docutils literal notranslate"><span class="pre">pid2</span> <span class="pre">(output1)</span></code> means that the module <code class="code docutils literal notranslate"><span class="pre">pid2</span></code> is
+being used by the module <code class="code docutils literal notranslate"><span class="pre">output1</span></code>, which is actually a submodule of the
+<code class="code docutils literal notranslate"><span class="pre">lockbox</span></code> module). You can right-click anywhere on the grayed out
+widget and click on “Free” to override that reservation and use the module
+for your own purposes.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>If you override a module reservation, the module in parenthesis
+might stop to function properly. A better practice is to identify
+the top-level module responsible for the reservation, remove its
+name from the list in your configuration file (located at
+/HOME/pyrpl_user_dir/config/&lt;string_shown_in_top_bar_of_the_gui&gt;.yml)
+and restart PyRPL with that configuration.</p>
+</div>
+</section>
+<section id="module-pyrpl.widgets.module_widgets.acquisition_module_widget">
+<span id="acquisition-module-widgets"></span><span id="acquisition-widget-label"></span><h2><span class="section-number">2.4. </span>Acquisition Module Widgets<a class="headerlink" href="#module-pyrpl.widgets.module_widgets.acquisition_module_widget" title="Link to this heading">¶</a></h2>
+<p>Acquisition modules are the modules used to acquire data from the Red Pitaya.</p>
+<p>At the moment, they include the</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="api.html#module-pyrpl.hardware_modules.scope" title="pyrpl.hardware_modules.scope"><code class="xref py py-mod docutils literal notranslate"><span class="pre">scope</span></code></a>,</p></li>
+<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">network_analyzer</span></code>,</p></li>
+<li><p><a class="reference internal" href="api.html#module-pyrpl.software_modules.spectrum_analyzer" title="pyrpl.software_modules.spectrum_analyzer"><code class="xref py py-mod docutils literal notranslate"><span class="pre">spectrum_analyzer</span></code></a>.</p></li>
+</ul>
+<p>All the acquisition modules have in common a plot area where the data is
+displayed and a control panel BELOW the plot for changing acquisition
+settings. Widgets for specialized acquisition modules
+(e.g. <code class="xref py py-class docutils literal notranslate"><span class="pre">Scope</span></code>) have an additional control
+panel ABOVE the plot are for settings that are only available for that module.</p>
+<p>The different buttons in the acquisition module control panel below the plot are:</p>
+<ul class="simple">
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">trace_average</span></code> chooses the number of successive
+traces to average together.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">curve_name</span></code> is the name for the next curve that is saved.</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">Run</span> <span class="pre">single</span></code> starts a single acquisition of <code class="code docutils literal notranslate"><span class="pre">trace_average</span></code>
+traces (calls <code class="xref py py-meth docutils literal notranslate"><span class="pre">AcquisitionModule.single()</span></code>).</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">Run</span> <span class="pre">continuous</span></code> starts a continuous acquisition with a running
+average filter, where <code class="code docutils literal notranslate"><span class="pre">trace_average</span></code> is the decay constant of the
+running average filter (calls <code class="xref py py-meth docutils literal notranslate"><span class="pre">AcquisitionModule.continuous()</span></code>).</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">Restart</span> <span class="pre">average</span></code> resets trace averages to zero to start a new
+measurement from scratch.</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">Save</span> <span class="pre">curve</span></code> saves the current measurement data to a new
+<code class="xref py py-class docutils literal notranslate"><span class="pre">pyrpl.curvedb.CurveDB</span></code> object under the name
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">curve_name</span></code>.</p></li>
+</ul>
+<section id="scope-widget">
+<span id="scope-widget-label"></span><h3><span class="section-number">2.4.1. </span>Scope Widget<a class="headerlink" href="#scope-widget" title="Link to this heading">¶</a></h3>
+<p>The scope widget is represented in the image below.</p>
+<a class="reference internal image-reference" href="_images/scope_widget.jpg"><img alt="scope module widget" class="align-center" src="_images/scope_widget.jpg" style="width: 100%;" />
+</a>
+<p id="module-pyrpl.widgets.module_widgets.scope_widget">The control panel above the plotting area allows to manipulate the following
+attributes specific to the <code class="xref py py-class docutils literal notranslate"><span class="pre">Scope</span></code>:</p>
+<ul class="simple">
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">ch1_active</span></code>/<code class="xref py py-attr docutils literal notranslate"><span class="pre">ch2_active</span></code>: Hide/show the trace
+corresponding to ch1/ch2.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">input1</span></code>/<code class="xref py py-attr docutils literal notranslate"><span class="pre">input2</span></code>: Choose the input among a
+list of possible signals. Internal signals can be referenced by their
+symbolic name e.g. <code class="code docutils literal notranslate"><span class="pre">lockbox.outputs.output1</span></code>.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">threshold</span></code>: The voltage threshold for the scope trigger.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">hysteresis</span></code>: Hysteresis for the scope trigger, i.e. the scope
+input signal must exceed the <code class="xref py py-attr docutils literal notranslate"><span class="pre">threshold</span></code> value by more than
+the hysteresis value to generate a trigger event.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">duration</span></code>: The full duration of the scope trace to acquire,
+in units of seconds.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">trigger_delay</span></code>: The delay beteween trigger event and the
+center of the trace.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">trigger_source</span></code>: The channel to use as trigger input.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">average</span></code>: Enables “averaging” a.k.a. “high-resolution” mode,
+which averages all data samples acquired at the full sampling rate between
+two successive points of the trace. If disabled, only a sample of the
+full-rate signal is shown as the trace. The averaging mode corresponds to a
+moving-average filter with a cutoff frequency of
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">sampling_time</span></code>
+<span class="math notranslate nohighlight">\(^{-1} = 2^{14}/\mathrm{duration}\)</span>
+in units of Hz.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">xy_mode</span></code>: If selected, channel 2 is plotted as a function of
+channel 1 (instead of channels 1 and 2 as a function of time).</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">Trigger</span> <span class="pre">mode</span></code> (internally represented by <code class="xref py py-attr docutils literal notranslate"><span class="pre">rolling_mode</span></code>):</p>
+<ul>
+<li><p><code class="code docutils literal notranslate"><span class="pre">Normal</span></code> is used for triggered acquisition.</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">Untriggered</span> <span class="pre">(rolling)</span></code> is used for continuous acquisition without
+requiring a trigger signal, where the traces “roll” through the plotting
+area from right to left in real-time. The rolling mode does not allow for
+trace averaging nor durations below 0.1 s.</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="network-analyzer-widget">
+<span id="na-widget-label"></span><h3><span class="section-number">2.4.2. </span>Network Analyzer Widget<a class="headerlink" href="#network-analyzer-widget" title="Link to this heading">¶</a></h3>
+<p>The network analyzer widget is represented in the image below.</p>
+<a class="reference internal image-reference" href="_images/network_analyzer_widget.jpg"><img alt="scope module widget" class="align-center" src="_images/network_analyzer_widget.jpg" style="width: 100%;" />
+</a>
+<p id="module-pyrpl.widgets.module_widgets.na_widget">The network analyzer records the coherent response of the signal at the port
+<code class="code docutils literal notranslate"><span class="pre">input</span></code> to a sinusoidal excitation of variable frequency sent to the
+output selected in <code class="code docutils literal notranslate"><span class="pre">output_direct</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If <code class="code docutils literal notranslate"><span class="pre">output_direct='off'</span></code>, another module’s input can be set
+to <code class="code docutils literal notranslate"><span class="pre">networkanalyzer</span></code> to test its response to a frequency sweep.</p>
+</div>
+<ul class="simple">
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">amplitude</span></code>
+sets the amplitude of the sinusoidal excitation in Volts.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">start_freq</span></code>
+/ <code class="xref py py-attr docutils literal notranslate"><span class="pre">stop_freq</span></code>
+define the frequency range over which a transfer function is recorded.
+Swapping the values of <code class="code docutils literal notranslate"><span class="pre">start_freq</span></code> and <code class="code docutils literal notranslate"><span class="pre">stop_freq</span></code> reverses the
+direction of the frequency sweep. Setting <code class="code docutils literal notranslate"><span class="pre">stop_freq</span> <span class="pre">=</span> <span class="pre">start_freq</span></code>
+enables the “zero-span” mode, where the coherent response at a constant
+frequency is recorded as a function of time.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">points</span></code>
+defines the number of frequency points in the recorded transfer function.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">rbw</span></code> is
+the cutoff frequency of the low-pass filter after demodulation. Furthermore,
+the time :math:`      au` spent to record each point is
+:math:`       au =` <code class="code docutils literal notranslate"><span class="pre">average_per_point</span></code> / <code class="code docutils literal notranslate"><span class="pre">rbw</span></code>.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">average_per_point</span></code>:
+Each point is averaged inside the FPGA before being retrieved by the
+client computer that runs PyRPL. You should increase this parameter or
+decrease <code class="code docutils literal notranslate"><span class="pre">rbw</span></code> if the communication time between the Red Pitaya and
+the client computer limits the acquisition speed.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">acbandwidth</span></code>
+is the cutoff frequency of a high-pass filter applied to the input before
+demodulation. A setting of zero disables the high-pass filter.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">logscale</span></code>
+enables the use of a logarithmic scale for the frequency axis, resulting in
+a logarithmic distribution of the frequency points as well.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">infer_open_loop_tf</span></code>
+applies the transformation <span class="math notranslate nohighlight">\(T \rightarrow \frac{T}{1+T}\)</span> to the displayed
+transfer function to correct for the effect of a closed feedback loop
+(not implemented at the moment).</p></li>
+</ul>
+</section>
+<section id="spectrum-analyzer-widget">
+<span id="specan-widget-label"></span><h3><span class="section-number">2.4.3. </span>Spectrum Analyzer Widget<a class="headerlink" href="#spectrum-analyzer-widget" title="Link to this heading">¶</a></h3>
+<p>The spectrum analyzer widget is represented in the image below.</p>
+<a class="reference internal image-reference" href="_images/spectrum_analyzer_widget.jpg"><img alt="scope module widget" class="align-center" src="_images/spectrum_analyzer_widget.jpg" style="width: 100%;" />
+</a>
+<p id="module-pyrpl.widgets.module_widgets.spec_an_widget">The <code class="xref py py-class docutils literal notranslate"><span class="pre">SpectrumAnalyzer</span></code>
+allows to measure the spectrum (= the squared modulus of the
+Fourier-transformed autocorrelation function) of internal and external
+signals in PyRPL.</p>
+<p>The SpectrumAnalyzer has 2 different working modes:</p>
+<ul class="simple">
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">baseband</span></code> <code class="code docutils literal notranslate"><span class="pre">=</span> <span class="pre">True</span></code>
+<em>(baseband mode)</em>: The Fourier transform is directly applied on the sampled
+data. The frequency range of spectra always starts at zero by design in
+baseband mode. Two inputs can be used in this mode to compute spectra of
+two different signals. Furthermore, the complex cross-spectrum (containing
+magnitude and phase information) between the two inputs can be computed.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">baseband</span></code> <code class="code docutils literal notranslate"><span class="pre">=</span> <span class="pre">False</span></code>
+(<em>iq-mode - not available in the current version</em>):
+The input signals are first frequency-shifted by an
+<a class="reference internal" href="api.html#module-pyrpl.hardware_modules.iq" title="pyrpl.hardware_modules.iq"><code class="xref py py-mod docutils literal notranslate"><span class="pre">iq</span></code></a>-module and only then Fourier-transformed.
+This mode allows to study a narrow frequency span around an arbitrary center
+frequency.</p></li>
+</ul>
+<p>The following attributes can be manipulated by the SpectrumAnalyzer widget:</p>
+<ul class="simple">
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">span</span></code>:
+The span of frequencies over which a spectrum is acquired.
+In baseband mode, the actual span is half of this value
+(because no additional information is given in half-spectrum with negative
+frequencies).</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">rbw</span></code>:
+Resolution bandwidth of the spectrum to acquire (<code class="code docutils literal notranslate"><span class="pre">span</span></code> and
+<code class="code docutils literal notranslate"><span class="pre">bandwidth</span></code> are linked and cannot be set independently).</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">display_unit</span></code>:
+The unit in which the spectrum is plotted on the screen. Internally, e.g.
+in saved measurements, all spectra are represented in units of
+<span class="math notranslate nohighlight">\(\mathrm{V}_\mathrm{pk}^2\)</span>.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">window</span></code>:
+The type of window used for the Fourier transform. See
+scipy.signal.get_window for a list of available options.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">acbandwidth</span></code>
+<em>(only available with</em> <code class="code docutils literal notranslate"><span class="pre">baseband=False</span></code> <em>)</em>: The cut-off frequency of
+the high-pass filter before frequency-shifting (=demodulation) of the input
+signal.</p></li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Because the spectrum analyzer uses the data sampled by the scope to perform measurements,
+it is not possible to use both instruments simultaneously. When the spectrum-analyzer is running,
+the scope-widget appears greyed-out to show that it is not available.</p>
+</div>
+</section>
+</section>
+<section id="iq-widget">
+<span id="iq-widget-label"></span><h2><span class="section-number">2.5. </span>Iq Widget<a class="headerlink" href="#iq-widget" title="Link to this heading">¶</a></h2>
+<p>The iq widget is represented in the image below. A schematic of the internal connection of the IQ-module can be
+shown or hidden with the arrow button.</p>
+<a class="reference internal image-reference" href="_images/iq_widget.gif"><img alt="scope module widget" class="align-center" src="_images/iq_widget.gif" style="width: 100%;" />
+</a>
+<p id="module-pyrpl.widgets.module_widgets.iq_widget">The <a class="reference internal" href="api.html#module-pyrpl.hardware_modules.iq" title="pyrpl.hardware_modules.iq"><code class="xref py py-mod docutils literal notranslate"><span class="pre">iq</span></code></a>-module implements a variety of Digital
+Signal Processing (DSP) taks that require an internal reference signal
+(a so-called <em>local oscillator</em>) of arbitrary frequency. The task to perform
+is selected by the values of different internal registers. The various
+use-cases and necessary configuration is explained in the following sections.</p>
+<section id="pound-drever-hall-signal-generation">
+<h3><span class="section-number">2.5.1. </span>Pound Drever Hall signal generation<a class="headerlink" href="#pound-drever-hall-signal-generation" title="Link to this heading">¶</a></h3>
+<p>The PDH locking technique is widely used to lock a laser beam to a
+high-finesse optical cavity. The principle is to generate a strong
+phase modulation of the laser beam (for instance, with an electro-optic modulator)
+at a frequency exceeding the cavity bandwidth and to detect the amplitude
+modulation in the beam reflected by the cavity. The amplitude
+modulation is caused by the abrupt phase response of the cavity affecting
+independently the sidebands from the carrier, and its sign with respect
+to the imposed modulation depends on cavity detuning. The
+high-speed digital signal processing of the redpitaya allows us to
+perform all the modulation/demodulation steps inside the FPGA,
+with modulations frequencies up to Nyquist frequecies (62.5 MHz). The
+correct IQ-module settings for PDH generation are (refer to the IQ
+signal schematic for explanations):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">gain</span><span class="o">=</span><span class="mf">0.</span> <span class="c1"># no link from demodulation to modulation stage</span>
+<span class="n">amplitude</span><span class="o">=</span><span class="mf">1.</span> <span class="c1"># amplitude of the modulation</span>
+<span class="n">frequency</span><span class="o">=</span><span class="mf">50e6</span> <span class="c1"># Modulation frequency</span>
+<span class="n">phase</span><span class="o">=</span><span class="mi">0</span> <span class="c1"># adjust to compensate for cable length delays</span>
+<span class="n">output_direct</span><span class="o">=</span><span class="s1">&#39;out1&#39;</span> <span class="c1"># output to optical phase modulator</span>
+<span class="n">output_signal</span><span class="o">=</span><span class="s1">&#39;quadrature&#39;</span>
+<span class="nb">input</span><span class="o">=</span><span class="s1">&#39;in1&#39;</span> <span class="c1"># input from photodiode</span>
+<span class="n">bandwidth</span><span class="o">=</span><span class="mf">1e5</span> <span class="c1"># trade-off between noise and error-signal bandwidth</span>
+<span class="n">quadrature_factor</span><span class="o">=</span><span class="mi">256</span> <span class="c1"># adjust for saturation level</span>
+<span class="n">acbandwidth</span><span class="o">=</span><span class="mf">1e4</span> <span class="c1"># to prevent internal saturation problems</span>
+</pre></div>
+</div>
+</section>
+<section id="network-analyzer">
+<h3><span class="section-number">2.5.2. </span>Network analyzer<a class="headerlink" href="#network-analyzer" title="Link to this heading">¶</a></h3>
+<p>The network analyzer uses an IQ internally to accumulate the
+demodulated signal. The Network analyzer module automatically sets the
+following settings for the IQ module registers:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">gain</span><span class="o">=</span><span class="mi">0</span>
+<span class="n">quadrature_factor</span><span class="o">=</span><span class="mi">0</span>
+<span class="n">output_direct</span><span class="o">=</span><span class="n">output_direct</span>  <span class="c1"># use output_signal to excite an internal signal</span>
+<span class="n">frequency</span><span class="o">=</span><span class="n">frequency</span> <span class="c1"># is value is scanned over time</span>
+<span class="n">bandwidth</span><span class="o">=</span><span class="n">rbw</span> <span class="c1"># bandwidth of the frequency analysis</span>
+<span class="nb">input</span><span class="o">=</span><span class="nb">input</span>
+<span class="n">acbandwidth</span><span class="o">=</span><span class="n">acbandwidth</span>
+</pre></div>
+</div>
+</section>
+<section id="phase-frequency-detector">
+<h3><span class="section-number">2.5.3. </span>Phase-frequency detector<a class="headerlink" href="#phase-frequency-detector" title="Link to this heading">¶</a></h3>
+<p>The IQ-module can be used to perform phase/frequency comparison between
+the internal frequency reference and an input signal. This is done by
+connecting the output multiplexer to a frequency comparator (not
+represented in the schematic):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">output_signal</span><span class="o">=</span><span class="s1">&#39;pfd&#39;</span>
+</pre></div>
+</div>
+</section>
+<section id="tuneable-bandpass-filter">
+<h3><span class="section-number">2.5.4. </span>Tuneable bandpass filter<a class="headerlink" href="#tuneable-bandpass-filter" title="Link to this heading">¶</a></h3>
+<p>It is possible to realize very narrow bandpass filters by combining a
+demodulation and a remodulation stage. The correct settings are:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">gain</span><span class="o">=</span><span class="mf">1.</span> <span class="c1"># demod-&gt; modulation gain</span>
+<span class="n">amplitude</span><span class="o">=</span><span class="mf">0.</span> <span class="c1"># no internal excitation</span>
+<span class="n">frequency</span><span class="o">=</span><span class="mf">1e6</span> <span class="c1"># filter center frequency</span>
+<span class="n">bandwidth</span><span class="o">=</span><span class="mi">100</span> <span class="c1"># filter bandwidth (use a tuple for high-order filters)</span>
+<span class="n">quadrature_factor</span><span class="o">=</span><span class="mi">0</span>
+<span class="n">output_signal</span><span class="o">=</span><span class="s1">&#39;ouptut_direct&#39;</span> <span class="c1"># if the signal needs to be used internally</span>
+<span class="n">phase</span><span class="o">=</span><span class="mi">30</span> <span class="c1"># eventually include some dephasing to the filter</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="lockbox-widget">
+<span id="lockbox-widget-label"></span><h2><span class="section-number">2.6. </span>Lockbox Widget<a class="headerlink" href="#lockbox-widget" title="Link to this heading">¶</a></h2>
+<p>The lockbox widget is represented in the image below.</p>
+<a class="reference internal image-reference" href="_images/lockbox_widget.jpg"><img alt="lockbox module widget" class="align-center" src="_images/lockbox_widget.jpg" style="width: 100%;" />
+</a>
+<p id="module-pyrpl.widgets.module_widgets.lockbox_widget">The Lockbox widget is used to produce a control signal to make a system’s
+output follow a specified setpoint. The system has to behave linearly around
+the setpoint, which is the case for many systems. The key parts of the widget are:</p>
+<ul class="simple">
+<li><p>General controls: “classname” selects a particular Lockbox class from the
+ones defined in lockbox/models folder, and will determine the overall
+behaviour of the lockbox. “Calibrate all inputs” performs a sweep and uses
+acquired data to calibrate parameters relevant for the selected Lockbox
+class. Before attempting to lock, it’s recommendable, and sometimes even
+mandatory, to press this button.</p></li>
+<li><p>Stages: In many situations, it might be desirable to start locking the
+system with a certain set of locking parameters, and once this has been
+achieved, switch to a different set with possibly a different signal.
+For example, when locking a Fabry–Pérot interferometer, the first
+stage might be locking on the side of a transmission fringe, and later
+transferring to locking on-resonance with Pound-Drever-Hall input
+signal. It is possible to have as many stages as necessary, and they
+will be executed sequentially.</p></li>
+<li><p>Stage settings: each stage has its own
+setpoint (whose units can be chosen in the general setting setpoint_unit)
+and a gain factor (a premultiplier to account for desired gain differences
+among different stages). In addition, based on the state of the “lock on”
+tri-state checkbox, a stage can enable (checkbox checked), disable
+(checkbox disabled) or leave unaffected  (checkbox greyed out) the
+locking state when the stage is activated. The checkbox and field “reset
+offset” determine whether the lockbox should reset its output to a certain
+level when this stage is reached.</p></li>
+<li><p>Inputs and outputs: the PI parameters, together with limits, unit
+conversions and so on, are set in these tabs.</p></li>
+</ul>
+<p>The lockbox module is completely customizable and allows to implement complex
+locking logic by inheriting the “Lockbox” class and adding the new class into
+lockbox/models. For example, below is an end-to-end locking scenario for a
+Fabry–Pérot interferometer that uses the included “FabryPerot” class:</p>
+<p>You should start the lockbox module and first select the model class to
+FabryPerot. Then continue to configure first the outputs and inputs, filling
+in the information as good as possible. Critical fields are:</p>
+<ul class="simple">
+<li><p>Wavelength (in SI units)</p></li>
+<li><p>Outputs: configure the piezo output in the folding menu of inputs/outputs:</p>
+<ul>
+<li><p>Select which output (out1 or out2) is the piezo connected to.</p></li>
+<li><p>If it is the default_sweep_output, set the sweep parameters</p></li>
+<li><p>Fill in the cutoff frequency if there is an analog low-pass filter behind
+the redpitaya, and start with a unity-gain frequency of 10 Hz.</p></li>
+<li><p>Give an estimate on the displacement in meters per Volt or Hz per Volt
+(the latter being the obtained resonance frequency shift per volt at the Red
+Pitaya output), you ensure that the specified unit-gain is the one that
+Red Pitaya is able to set.</p></li>
+</ul>
+</li>
+<li><p>Inputs:</p>
+<ul>
+<li><p>Set transmission input to “in1” for example.</p></li>
+<li><p>If PDH is used, set PDH input parameters to the same parameters as you
+have in the IQ configuration. Lockbox takes care of the setting, and is
+able to compute gains and slopes automatically</p></li>
+</ul>
+</li>
+<li><p>Make sure to click “Sweep” and test whether a proper sweep is performed,
+and “Calibrate” to get the right numbers on the y-axis for the plotted
+input error signals</p></li>
+<li><p>At last, configure the locking sequence:</p>
+<ul>
+<li><p>Each stage sleeps for “duration” in seconds after setting the desired gains.</p></li>
+<li><p>The first stage should be used to reset all offsets to either +1 or -1
+Volts, and wait for 10 ms or so (depending on analog lowpass filters)</p></li>
+<li><p>Next stage is usually a “drift” stage, where you lock at a detuning of
++/- 1 or +/- 2 bandwidths, possibly with a gain_factor below 1. make sure
+you enable the checkbox “lock enabled” for the piezo output here <strong>by
+clicking twice on it</strong> (it is actually a 3-state checkbox, see the
+information on the 1-click state when hovering over it). When you enable
+the locking sequence by clicking on lock, monitor the output voltage with a
+running scope, and make sure that this drift state actually makes the output voltage
+swing upwards. Otherwise, swap the sign of the setpoint / or the initial
+offset of the piezo output. Leave enough time for this stage to catch on to
+the side of a resonance.</p></li>
+<li><p>Next stages can be adapted to switch to other error signals, modify
+setpoints and gains and so on.</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="api.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title"><span class="section-number">3. </span>API manual</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="installation.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title"><span class="section-number">1. </span>Installation</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2014-2025, Leonhard Neuhaus, Samuel Deléglise, Michaël Croquette 
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">2. GUI instruments manual</a><ul>
+<li><a class="reference internal" href="#video-tutorial">2.1. Video tutorial</a></li>
+<li><a class="reference internal" href="#starting-the-gui">2.2. Starting the GUI</a></li>
+<li><a class="reference internal" href="#a-typical-module-widget-pid-module">2.3. A typical module widget: PID module</a></li>
+<li><a class="reference internal" href="#module-pyrpl.widgets.module_widgets.acquisition_module_widget">2.4. Acquisition Module Widgets</a><ul>
+<li><a class="reference internal" href="#scope-widget">2.4.1. Scope Widget</a></li>
+<li><a class="reference internal" href="#network-analyzer-widget">2.4.2. Network Analyzer Widget</a></li>
+<li><a class="reference internal" href="#spectrum-analyzer-widget">2.4.3. Spectrum Analyzer Widget</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#iq-widget">2.5. Iq Widget</a><ul>
+<li><a class="reference internal" href="#pound-drever-hall-signal-generation">2.5.1. Pound Drever Hall signal generation</a></li>
+<li><a class="reference internal" href="#network-analyzer">2.5.2. Network analyzer</a></li>
+<li><a class="reference internal" href="#phase-frequency-detector">2.5.3. Phase-frequency detector</a></li>
+<li><a class="reference internal" href="#tuneable-bandpass-filter">2.5.4. Tuneable bandpass filter</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#lockbox-widget">2.6. Lockbox Widget</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=81b53a12"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    </body>
+</html>

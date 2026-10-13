@@ -1,0 +1,1826 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html">
+        <link rel="prefetch" href="../../_static/logo.png" as="image">
+
+    <link rel="shortcut icon" href="../../_static/icon.ico"><!-- Generated with Sphinx 7.4.7 and Furo 2025.12.19 -->
+        <title>Introduction to pyrpl - pyrpl 0.9.9.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #eeffcc;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../index.html"><div class="brand">pyrpl 0.9.9.1 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../../_static/logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">pyrpl 0.9.9.1 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">1. Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gui.html">2. GUI instruments manual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">3. API manual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basics.html">4. Basics of the PyRPL Architecture</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../developer_guide/index.html">5. Notes for developers</a><input aria-label="Toggle navigation of 5. Notes for developers" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../developer_guide/contributing.html">5.1. Contributing to PyRPL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../developer_guide/fpga_compilation.html">5.2. Building the FPGA firmware</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../developer_guide/unittests.html">5.3. Unittests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../developer_guide/codingstyle.html">5.4. Coding style guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../developer_guide/codingworkflow.html">5.5. Workflow to submit code changes</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../developer_guide/api/index.html">5.6. API specifications from the moment of their development</a><input aria-label="Toggle navigation of 5.6. API specifications from the moment of their development" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../developer_guide/api/asynchronous/index.html">5.6.1. Requirements for an asynchronous interface compatible with python 3 asyncio</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../developer_guide/api/asynchronous/benchmark.html">5.6.2. Asynchronous sleep function and benchmarks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../developer_guide/api/spectrum.html">5.6.3. How a spectrum is computed in PyRPL</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../developer_guide/api/memory_tree.html">5.6.4. MemoryTree</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../developer_guide/api/attribute_and_module.html">5.6.5. Base classes Attributes and Module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../developer_guide/api/select_property.html">5.6.6. Starting to rewrite SelectAttribute/Property</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../developer_guide/api/acquisition_module.html">5.6.7. AcquisitionModule</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../developer_guide/api/lockbox.html">5.6.8. Lockbox</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../developer_guide/api/data_widget.html">5.6.9. DataWidget</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../developer_guide/dist/index.html">5.7. Distribution of pyrpl</a><input aria-label="Toggle navigation of 5.7. Distribution of pyrpl" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../developer_guide/dist/autodoc.html">5.7.1. Building the documentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../developer_guide/dist/executable.html">5.7.2. Building standalone applications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../developer_guide/dist/release.html">5.7.3. Preparing a release</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../developer_guide/sdcard.html">5.8. SD card preparation</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../gallery/index.html">Gallery of PyRPL usage examples</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../index.html">User’s guide to PyRPL</a><input aria-label="Toggle navigation of User’s guide to PyRPL" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../installation/index.html">Installation</a><input aria-label="Toggle navigation of Installation" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../installation/hardware_installation.html">Hardware installation for PyRPL</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../installation/pyrpl_installation.html">Installing PyRPL</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../installation/common_problems.html">Common installation problems</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../installation/user_dir.html">Directory for user data “PYRPL_USER_DIR”</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html">Quickstart Tutorial for PyRPL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../basics/index.html">Basics of PyRPL</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference_guide/index.html">Reference guide to PyRPL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_feedback.html">Feedback by PyRPL users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../publications.html">Publications about PyRPL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../thanks.html">Contributors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../thanks.html#funding-and-support">Funding and support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../thanks.html#about">About</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../../_sources/user_guide/tutorial/tutorial.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="introduction-to-pyrpl">
+<h1>Introduction to pyrpl<a class="headerlink" href="#introduction-to-pyrpl" title="Link to this heading">¶</a></h1>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This page is a legacy tutorial kept for reference. Some parts are outdated
+(for example Python 2 syntax and old GUI examples). For current
+installation and usage guidance, prefer <a class="reference internal" href="../installation/index.html"><span class="doc">Installation</span></a>,
+<a class="reference internal" href="../../installation.html"><span class="doc">Installation</span></a>, <a class="reference internal" href="../../gui.html"><span class="doc">GUI instruments manual</span></a> and <a class="reference internal" href="../../api.html"><span class="doc">API manual</span></a>.</p>
+</div>
+<section id="introduction">
+<h2>1) Introduction<a class="headerlink" href="#introduction" title="Link to this heading">¶</a></h2>
+<p>The RedPitaya is an affordable FPGA board with fast analog inputs and
+outputs. This makes it interesting also for quantum optics experiments.
+The software package PyRPL (Python RedPitaya Lockbox) is an
+implementation of many devices that are needed for optics experiments
+every day. The user interface and all high-level functionality is
+written in python, but an essential part of the software is hidden in a
+custom FPGA design (based on the official RedPitaya software version
+0.95). While most users probably never want to touch the FPGA design,
+the Verilog source code is provided together with this package and may
+be modified to customize the software to your needs.</p>
+</section>
+<section id="table-of-contents">
+<h2>2) Table of contents<a class="headerlink" href="#table-of-contents" title="Link to this heading">¶</a></h2>
+<p>In this document, you will find the following sections: 1. Introduction
+2. ToC 3. Installation 4. First steps 5. RedPitaya Modules 6. The Pyrpl
+class 7. The Graphical User Interface</p>
+<p>If you are using Pyrpl for the first time, you should read sections 1-4.
+This will take about 15 minutes and should leave you able to communicate
+with your RedPitaya via python.</p>
+<p>If you plan to use Pyrpl for a project that is not related to quantum
+optics, you probably want to go to section 5 then and omit section 6
+altogether. Inversely, if you are only interested in a powerful tool for
+quantum optics and dont care about the details of the implementation, go
+to section 6. If you plan to contribute to the repository, you should
+definitely read section 5 to get an idea of what this software package
+realy does, and where help is needed. Finaly, Pyrpl also comes with a
+Graphical User Interface (GUI) to interactively control the modules
+described in section 5. Please, read section 7 for a quick description
+of the GUI.</p>
+</section>
+<section id="installation">
+<h2>3) Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
+<section id="option-1-install-the-latest-stable-release-with-uv-recommended">
+<h3>Option 1: Install the latest stable release with uv (recommended)<a class="headerlink" href="#option-1-install-the-latest-stable-release-with-uv-recommended" title="Link to this heading">¶</a></h3>
+<p>Create an isolated environment and install PyRPL with a supported Qt binding:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>python<span class="w"> </span>install<span class="w"> </span><span class="m">3</span>.12
+uv<span class="w"> </span>venv<span class="w"> </span>--python<span class="w"> </span><span class="m">3</span>.12
+uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;pyrpl[qt-pyqt5]&quot;</span>
+</pre></div>
+</div>
+<p>You can replace <code class="docutils literal notranslate"><span class="pre">qt-pyqt5</span></code> with <code class="docutils literal notranslate"><span class="pre">qt-pyqt6</span></code>, <code class="docutils literal notranslate"><span class="pre">qt-pyside2</span></code> or
+<code class="docutils literal notranslate"><span class="pre">qt-pyside6</span></code>.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>#no-test
+!uv pip install &quot;pyrpl[qt-pyqt5]&quot;
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import pyrpl
+print(pyrpl.__version__)
+print(pyrpl.__file__)
+</pre></div>
+</div>
+</section>
+<section id="option-2-clone-the-repository-developers">
+<h3>Option 2: Clone the repository (developers)<a class="headerlink" href="#option-2-clone-the-repository-developers" title="Link to this heading">¶</a></h3>
+<p>If you have a <a class="reference external" href="https://git-scm.com/downloads">git client</a> installed
+(recommended), clone the repository and install from the project root:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/pyrpl-fpga/pyrpl.git
+<span class="nb">cd</span><span class="w"> </span>pyrpl
+uv<span class="w"> </span>sync<span class="w"> </span>--extra<span class="w"> </span>qt-pyqt5<span class="w"> </span>--extra<span class="w"> </span>dev
+</pre></div>
+</div>
+<p>Run commands in the synchronized environment with <code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">run</span></code>.</p>
+</section>
+<section id="option-3-existing-conda-environment-optional">
+<h3>Option 3: Existing conda environment (optional)<a class="headerlink" href="#option-3-existing-conda-environment-optional" title="Link to this heading">¶</a></h3>
+<p>If you prefer conda, create and activate a dedicated environment first:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>pyrpl-env<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.12<span class="w"> </span>pip
+conda<span class="w"> </span>activate<span class="w"> </span>pyrpl-env
+python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;pyrpl[qt-pyqt5]&quot;</span>
+</pre></div>
+</div>
+<p>For a development checkout, replace the final command with
+<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">&quot;.[qt-pyqt5,dev]&quot;</span></code> from the project root.</p>
+</section>
+<section id="compiling-the-server-application-optional">
+<h3>Compiling the server application (optional)<a class="headerlink" href="#compiling-the-server-application-optional" title="Link to this heading">¶</a></h3>
+<p>The software comes with a precompiled version of the server application
+(written in C) that runs on the RedPitaya. This application is uploaded
+automatically when you start the connection. If you made changes to this
+file, you can recompile it by typing</p>
+<p><code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">-C</span> <span class="pre">pyrpl/monitor_server</span></code></p>
+<p>For this to work, you must have gcc and the cross-compiling libraries
+installed. Basically, if you can compile any of the official RedPitaya
+software written in C, then this should work, too. If you do not have a
+working cross-compiler installed on your UserPC, you can also compile
+directly on the RedPitaya (tested with ecosystem v0.95). To do so, you
+must upload the directory pyrpl/monitor_server on the redpitaya, and
+launch the compilation with the command
+<code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">CROSS_COMPILE=</span></code></p>
+</section>
+<section id="compiling-the-fpga-bitfile-optional">
+<h3>Compiling the FPGA bitfile (optional)<a class="headerlink" href="#compiling-the-fpga-bitfile-optional" title="Link to this heading">¶</a></h3>
+<p>If you would like to modify the FPGA code or just make sure that it can
+be compiled, you should have a working installation of Vivado 2015.4.
+For windows users it is recommended to set up a virtual machine with
+Ubuntu on which the compiler can be run in order to avoid any
+compatibility problems. For the FPGA part, you only need the /fpga
+subdirectory of this software. Make sure it is somewhere in the file
+system of the machine with the vivado installation. Then type the
+following commands. You should adapt the path in the first and second
+commands to the locations of the Vivado installation / the fpga
+directory in your filesystem:</p>
+<p><code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">/opt/Xilinx/Vivado/2015.4/settings64.sh</span></code></p>
+<p><code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">/home/myusername/fpga</span></code></p>
+<p><code class="docutils literal notranslate"><span class="pre">make</span></code></p>
+<p>The compilation should take between 15 and 30 minutes. The result will
+be the file <code class="docutils literal notranslate"><span class="pre">fpga/red_pitaya.bin</span></code>. To test the new FPGA
+design, make sure that this file in the fpga subdirectory of your pyrpl
+code directory. That is, if you used a virtual machine for the
+compilation, you must copy the file back to the original machine on
+which you run pyrpl.</p>
+</section>
+<section id="unitary-tests-optional">
+<h3>Unitary tests (optional)<a class="headerlink" href="#unitary-tests-optional" title="Link to this heading">¶</a></h3>
+<p>In order to make sure that any recent changes do not affect prior
+functionality, a large number of automated tests have been implemented.
+Every push to the github repository is automatically installed tested on
+an empty virtual linux system. However, the testing server has currently
+no RedPitaya available to run tests directly on the FPGA. Therefore it
+is also useful to run these tests on your local machine in case you
+modified the code.</p>
+<p>Currently, the tests confirm that - all pyrpl modules can be loaded in
+python - all designated registers can be read and written - future:
+functionality of all major submodules against reference benchmarks</p>
+<p>To run the test, navigate in command line into the pyrpl directory and
+type</p>
+<p><code class="docutils literal notranslate"><span class="pre">set</span> <span class="pre">REDPITAYA_HOSTNAME=192.168.1.100</span></code> (in Windows Command Prompt) or</p>
+<p><code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">REDPITAYA_HOSTNAME=192.168.1.100</span></code> (in Linux or macOS)</p>
+<p><code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">run</span> <span class="pre">pytest</span></code></p>
+<p>The first command tells the tests at which IP address they can find a
+RedPitaya. The last command runs the current pytest test suite.</p>
+<p>After you have implemented additional features, you are encouraged to
+add unitary tests to consolidate the changes. If you immediately
+validate your changes with unitary tests, this will result in a huge
+productivity improvement for you. You can find all test files in the
+folder <code class="docutils literal notranslate"><span class="pre">pyrpl/pyrpl/test</span></code>, and the existing examples
+(notably <code class="docutils literal notranslate"><span class="pre">test_example.py</span></code>) should give you a good point
+to start. As long as you add a function starting with ‘test_’ in one of
+these files, your test should automatically run along with the others.
+As you add more tests, you will see the number of total tests increase
+when you run the test launcher.</p>
+</section>
+<section id="workflow-to-submit-code-changes-for-developers">
+<h3>Workflow to submit code changes (for developers)<a class="headerlink" href="#workflow-to-submit-code-changes-for-developers" title="Link to this heading">¶</a></h3>
+<p>As soon as the code will have reached version 0.9.0.3 (high-level
+unitary tests implemented and passing, approx. end of May 2016), we will
+consider the master branch of the github repository as the stable
+pre-release version. The goal is that the master branch will guarantee
+functionality at all times.</p>
+<p>Any changes to the code, if they do not pass the unitary tests or have
+not been tested, are to be submitted as pull-requests in order not to
+endanger the stability of the master branch. We will briefly desribe how
+to properly submit your changes in that scenario.</p>
+<p>Let’s say you already changed the code of your local clone of pyrpl.
+Instead of directly committing the change to the master branch, you
+should create your own branch. In the windows application of github,
+when you are looking at the pyrpl repository, there is a small symbol
+looking like a steet bifurcation in the upper left corner, that says
+“Create new branch” when you hold the cursor over it. Click it and enter
+the name of your branch “leos development branch” or similar. The
+program will automatically switch to that branch. Now you can commit
+your changes, and then hit the “publish” or “sync” button in the upper
+right. That will upload your changes so everyone can see and test them.</p>
+<p>You can continue working on your branch, add more commits and sync them
+with the online repository until your change is working. If the master
+branch has changed in the meantime, just click ‘sync’ to download them,
+and then the button “update from master” (upper left corner of the
+window) that will insert the most recent changes of the master branch
+into your branch. If the button doesn’t work, that means that there are
+no changes available. This way you can benefit from the updates of the
+stable pre-release version, as long as they don’t conflict with the
+changes you have been working on. If there are conflicts, github will
+wait for you to resolve them. In case you have been recompiling the
+fpga, there will always be a conflict w.r.t. the file ‘red_pitaya.bin’
+(since it is a binary file, github cannot simply merge the differences
+you implemented). The best way to deal with this problem is to recompile
+the fpga bitfile after the ‘update from master’. This way the binary
+file in your repository will correspond to the fpga code of the merged
+verilog files, and github will understand from the most recent
+modification date of the file that your local version of red_pitaya.bin
+is the one to keep.</p>
+<p>At some point, you might want to insert your changes into the master
+branch, because they have been well-tested and are going to be useful
+for everyone else, too. To do so, after having committed and synced all
+recent changes to your branch, click on “Pull request” in the upper
+right corner, enter a title and description concerning the changes you
+have made, and click “Send pull request”. Now your job is done. I will
+review and test the modifications of your code once again, possibly fix
+incompatibility issues, and merge it into the master branch once all is
+well. After the merge, you can delete your development branch. If you
+plan to continue working on related changes, you can also keep the
+branch and send pull requests later on. If you plan to work on a
+different feature, I recommend you create a new branch with a name
+related to the new feature, since this will make the evolution history
+of the feature more understandable for others. Or, if you would like to
+go back to following the master branch, click on the little downward
+arrow besides the name of your branch close to the street bifurcation
+symbol in the upper left of the github window. You will be able to
+choose which branch to work on, and to select master.</p>
+<p>Let’s all try to stick to this protocol. It might seem a little
+complicated at first, but you will quikly appreciate the fact that other
+people’s mistakes won’t be able to endanger your working code, and that
+by following the commits of the master branch alone, you will realize if
+an update is incompatible with your work.</p>
+</section>
+</section>
+<section id="first-steps">
+<h2>4) First steps<a class="headerlink" href="#first-steps" title="Link to this heading">¶</a></h2>
+<p>If the installation went well, you should now be able to load the
+package in python. If that works you can pass directly to the next
+section ‘Connecting to the RedPitaya’.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from pyrpl import RedPitaya
+</pre></div>
+</div>
+<p>Sometimes, python has problems finding the path to pyrplockbox. In that
+case you should add the pyrplockbox directory to your pythonpath
+environment variable
+(<a class="reference external" href="http://stackoverflow.com/questions/3402168/permanently-add-a-directory-to-pythonpath">http://stackoverflow.com/questions/3402168/permanently-add-a-directory-to-pythonpath</a>).
+If you do not know how to do that, just manually navigate the ipython
+console to the directory, for example:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>cd c:\pyrpl-fpga\github\pyrpl
+</pre></div>
+</div>
+<p>Now retry to load the module. It should really work now.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from pyrpl import RedPitaya
+</pre></div>
+</div>
+<section id="connecting-to-the-redpitaya">
+<h3>Connecting to the RedPitaya<a class="headerlink" href="#connecting-to-the-redpitaya" title="Link to this heading">¶</a></h3>
+<p>You should have a working SD card (any version of the SD card content is
+okay) in your RedPitaya (for instructions see
+<a class="reference external" href="http://redpitaya.com/quick-start/">http://redpitaya.com/quick-start/</a>). The RedPitaya should be connected
+via ethernet to your computer. To set this up, there is plenty of
+instructions on the RedPitaya website
+(<a class="reference external" href="http://redpitaya.com/quick-start/">http://redpitaya.com/quick-start/</a>). If you type the ip address of your
+module in a browser, you should be able to start the different apps from
+the manufacturer. The default address is <a class="reference external" href="http://192.168.1.100">http://192.168.1.100</a>. If this
+works, we can load the python interface of pyrplockbox by specifying the
+RedPitaya’s ip address.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>HOSTNAME = &quot;192.168.1.100&quot;
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from pyrpl import RedPitaya
+r = RedPitaya(hostname=HOSTNAME)
+</pre></div>
+</div>
+<p>If you see at least one ‘&gt;’ symbol, your computer has successfully
+connected to your RedPitaya via SSH. This means that your connection
+works. The message ‘Server application started on port 2222’ means that
+your computer has sucessfully installed and started a server application
+on your RedPitaya. Once you get ‘Client started with success’, your
+python session has successfully connected to that server and all things
+are in place to get started.</p>
+</section>
+<section id="basic-communication-with-your-redpitaya">
+<h3>Basic communication with your RedPitaya<a class="headerlink" href="#basic-communication-with-your-redpitaya" title="Link to this heading">¶</a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>#check the value of input1
+print(r.scope.voltage1)
+</pre></div>
+</div>
+<p>With the last command, you have successfully retrieved a value from an
+FPGA register. This operation takes about 300 µs on my computer. So
+there is enough time to repeat the reading n times.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>#see how the adc reading fluctuates over time
+import time
+from matplotlib import pyplot as plt
+times,data = [],[]
+t0 = time.time()
+n = 3000
+for i in range(n):
+    times.append(time.time()-t0)
+    data.append(r.scope.voltage1)
+print(&quot;Rough time to read one FPGA register: &quot;, (time.time()-t0)/n*1e6, &quot;µs&quot;)
+%matplotlib inline
+f, axarr = plt.subplots(1,2, sharey=True)
+axarr[0].plot(times, data, &quot;+&quot;);
+axarr[0].set_title(&quot;ADC voltage vs time&quot;);
+axarr[1].hist(data, bins=10,density=True, orientation=&quot;horizontal&quot;);
+axarr[1].set_title(&quot;ADC voltage histogram&quot;);
+</pre></div>
+</div>
+<p>You see that the input values are not exactly zero. This is normal with
+all RedPitayas as some offsets are hard to keep zero when the
+environment changes (temperature etc.). So we will have to compensate
+for the offsets with our software. Another thing is that you see quite a
+bit of scatter beetween the points - almost as much that you do not see
+that the datapoints are quantized. The conclusion here is that the input
+noise is typically not totally negligible. Therefore we will need to use
+every trick at hand to get optimal noise performance.</p>
+<p>After reading from the RedPitaya, let’s now try to write to the register
+controlling the first 8 yellow LED’s on the board. The number written to
+the LED register is displayed on the LED array in binary representation.
+You should see some fast flashing of the yellow leds for a few seconds
+when you execute the next block.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>#blink some leds for 5 seconds
+from time import sleep
+for i in range(1025):
+    r.hk.led=i
+    sleep(0.005)
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># now feel free to play around a little to get familiar with binary representation by looking at the leds.
+from time import sleep
+r.hk.led = 0b00000001
+for i in range(10):
+    r.hk.led = ~r.hk.led&gt;&gt;1
+    sleep(0.2)
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import random
+for i in range(100):
+    r.hk.led = random.randint(0,255)
+    sleep(0.02)
+</pre></div>
+</div>
+</section>
+</section>
+<section id="redpitaya-modules">
+<h2>5) RedPitaya modules<a class="headerlink" href="#redpitaya-modules" title="Link to this heading">¶</a></h2>
+<p>Let’s now look a bit closer at the class RedPitaya. Besides managing the
+communication with your board, it contains different modules that
+represent the different sections of the FPGA. You already encountered
+two of them in the example above: “hk” and “scope”. Here is the full
+list of modules:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>r.hk #&quot;housekeeping&quot; = LEDs and digital inputs/outputs
+r.ams #&quot;analog mixed signals&quot; = auxiliary ADCs and DACs.
+
+r.scope #oscilloscope interface
+
+r.asg1 #&quot;arbitrary signal generator&quot; channel 1
+r.asg2 #&quot;arbitrary signal generator&quot; channel 2
+
+r.pid0 #first of four PID modules
+r.pid1
+r.pid2
+r.pid3
+
+r.iq0 #first of three I+Q quadrature demodulation/modulation modules
+r.iq1
+r.iq2
+
+r.iir #&quot;infinite impules response&quot; filter module that can realize complex transfer functions
+</pre></div>
+</div>
+<section id="asg-and-scope-module">
+<h3>ASG and Scope module<a class="headerlink" href="#asg-and-scope-module" title="Link to this heading">¶</a></h3>
+</section>
+<section id="arbitrary-signal-generator">
+<h3>Arbitrary Signal Generator<a class="headerlink" href="#arbitrary-signal-generator" title="Link to this heading">¶</a></h3>
+<p>There are two Arbitrary Signal Generator modules: asg1 and asg2. For
+these modules, any waveform composed of <span class="math notranslate nohighlight">\(2^{14}\)</span> programmable
+points is sent to the output with arbitrary frequency and start phase
+upon a trigger event.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>asg = r.asg1 # make a shortcut
+print(&quot;Trigger sources:&quot;, asg.trigger_sources)
+print(&quot;Output options: &quot;, asg.output_directs)
+</pre></div>
+</div>
+<p>Let’s set up the ASG to output a sawtooth signal of amplitude 0.8 V
+(peak-to-peak 1.6 V) at 1 MHz on output 2:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>asg.output_direct = &#39;out2&#39;
+asg.setup(waveform=&#39;halframp&#39;, frequency=20e4, amplitude=0.8, offset=0, trigger_source=&#39;immediately&#39;)
+</pre></div>
+</div>
+</section>
+<section id="oscilloscope">
+<h3>Oscilloscope<a class="headerlink" href="#oscilloscope" title="Link to this heading">¶</a></h3>
+<p>The scope works similar to the ASG but in reverse: Two channels are
+available. A table of <span class="math notranslate nohighlight">\(2^{14}\)</span> datapoints for each channel is
+filled with the time series of incoming data. Downloading a full trace
+takes about 10 ms over standard ethernet. The rate at which the memory
+is filled is the sampling rate (125 MHz) divided by the value of
+‘decimation’. The property ‘average’ decides whether each datapoint is a
+single sample or the average of all samples over the decimation
+interval.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>s = r.scope # shortcut
+print(&quot;Available decimation factors:&quot;, s.decimations)
+print(&quot;Trigger sources:&quot;, s.trigger_sources)
+print(&quot;Available inputs: &quot;, s.inputs)
+</pre></div>
+</div>
+<p>Let’s have a look at a signal generated by asg1. Later we will use
+convenience functions to reduce the amount of code necessary to set up
+the scope:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from time import sleep
+from pyrpl import RedPitaya
+
+#reload everything
+#r = RedPitaya(hostname=&quot;192.168.1.100&quot;)
+asg = r.asg1
+s = r.scope
+
+# turn off asg so the scope has a chance to measure its &quot;off-state&quot; as well
+asg.output_direct = &quot;off&quot;
+
+# setup scope
+s.input1 = &#39;asg1&#39;
+
+# pass asg signal through pid0 with a simple integrator - just for fun (detailed explanations for pid will follow)
+r.pid0.input = &#39;asg1&#39;
+r.pid0.ival = 0 # reset the integrator to zero
+r.pid0.i = 1000 # unity gain frequency of 1000 hz
+r.pid0.p = 1.0 # proportional gain of 1.0
+r.pid0.inputfilter = [0,0,0,0] # leave input filter disabled for now
+
+# show pid output on channel2
+s.input2 = &#39;pid0&#39;
+
+# trig at zero volt crossing
+s.threshold = 0
+
+# positive/negative slope is detected by waiting for input to
+# sweept through hysteresis around the trigger threshold in
+# the right direction
+s.hysteresis = 0.01
+
+# trigger on the input signal positive slope
+s.trigger_source = &#39;ch1_positive_edge&#39;
+
+# take data symetrically around the trigger event
+s.trigger_delay = 0
+
+# set decimation factor to 64 -&gt; full scope trace is 8ns * 2^14 * decimation = 8.3 ms long
+s.decimation = 64
+
+# setup the scope for an acquisition
+s.setup()
+
+print(&quot;\nBefore turning on asg:&quot;)
+print(&quot;Curve ready:&quot;, s.curve_ready()) # trigger should still be armed
+
+# turn on asg and leave enough time for the scope to record the data
+asg.setup(frequency=1e3, amplitude=0.3, start_phase=90, waveform=&#39;halframp&#39;, trigger_source=&#39;immediately&#39;)
+sleep(0.010)
+
+# check that the trigger has been disarmed
+print(&quot;\nAfter turning on asg:&quot;)
+print(&quot;Curve ready:&quot;, s.curve_ready())
+print(&quot;Trigger event age [ms]:&quot;,8e-9*((s.current_timestamp&amp;0xFFFFFFFFFFFFFFFF) - s.trigger_timestamp)*1000)
+
+# plot the data
+%matplotlib inline
+plt.plot(s.times*1e3,s.single(ch=1),s.times*1e3,s.single(ch=2));
+plt.xlabel(&quot;Time [ms]&quot;);
+plt.ylabel(&quot;Voltage&quot;);
+</pre></div>
+</div>
+<p>What do we see? The blue trace for channel 1 shows just the output
+signal of the asg. The time=0 corresponds to the trigger event. One can
+see that the trigger was not activated by the constant signal of 0 at
+the beginning, since it did not cross the hysteresis interval. One can
+also see a ‘bug’: After setting up the asg, it outputs the first value
+of its data table until its waveform output is triggered. For the
+halframp signal, as it is implemented in pyrpl, this is the maximally
+negative value. However, we passed the argument start_phase=90 to the
+asg.setup function, which shifts the first point by a quarter period.
+Can you guess what happens when we set start_phase=180? You should try
+it out!</p>
+<p>In green, we see the same signal, filtered through the pid module. The
+nonzero proportional gain leads to instant jumps along with the asg
+signal. The integrator is responsible for the constant decrease rate at
+the beginning, and the low-pass that smoothens the asg waveform a
+little. One can also foresee that, if we are not paying attention, too
+large an integrator gain will quickly saturate the outputs.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># useful functions for scope diagnostics
+print(&quot;Curve ready:&quot;, s.curve_ready())
+print(&quot;Trigger source:&quot;,s.trigger_source)
+print(&quot;Trigger threshold [V]:&quot;,s.threshold)
+print(&quot;Averaging:&quot;,s.average)
+print(&quot;Trigger delay [s]:&quot;,s.trigger_delay)
+print(&quot;Trace duration [s]: &quot;,s.duration)
+print(&quot;Trigger hysteresis [V]&quot;, s.hysteresis)
+print(&quot;Current scope time [cycles]:&quot;,hex(s.current_timestamp))
+print(&quot;Trigger time [cycles]:&quot;,hex(s.trigger_timestamp))
+print(&quot;Current voltage on channel 1 [V]:&quot;, r.scope.voltage1)
+print(&quot;First point in data buffer 1 [V]:&quot;, s.ch1_firstpoint)
+</pre></div>
+</div>
+</section>
+<section id="pid-module">
+<h3>PID module<a class="headerlink" href="#pid-module" title="Link to this heading">¶</a></h3>
+<p>We have already seen some use of the pid module above. There are four
+PID modules available: pid0 to pid3.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>print(r.pid0.help())
+</pre></div>
+</div>
+<section id="proportional-and-integral-gain">
+<h4>Proportional and integral gain<a class="headerlink" href="#proportional-and-integral-gain" title="Link to this heading">¶</a></h4>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>#make shortcut
+pid = r.pid0
+
+#turn off by setting gains to zero
+pid.p,pid.i = 0,0
+print(&quot;P/I gain when turned off:&quot;, pid.i,pid.p)
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># small nonzero numbers set gain to minimum value - avoids rounding off to zero gain
+pid.p = 1e-100
+pid.i = 1e-100
+print(&quot;Minimum proportional gain: &quot;, pid.p)
+print(&quot;Minimum integral unity-gain frequency [Hz]: &quot;, pid.i)
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># saturation at maximum values
+pid.p = 1e100
+pid.i = 1e100
+print(&quot;Maximum proportional gain: &quot;, pid.p)
+print(&quot;Maximum integral unity-gain frequency [Hz]: &quot;, pid.i)
+</pre></div>
+</div>
+</section>
+<section id="control-with-the-integral-value-register">
+<h4>Control with the integral value register<a class="headerlink" href="#control-with-the-integral-value-register" title="Link to this heading">¶</a></h4>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import numpy as np
+#make shortcut
+pid = r.pid0
+
+# set input to asg1
+pid.input = &quot;asg1&quot;
+
+# set asg to constant 0.1 Volts
+r.asg1.setup(waveform=&quot;DC&quot;, offset = 0.1)
+
+# set scope ch1 to pid0
+r.scope.input1 = &#39;pid0&#39;
+
+#turn off the gains for now
+pid.p,pid.i = 0, 0
+
+#set integral value to zero
+pid.ival = 0
+
+#prepare data recording
+from time import time
+times, ivals, outputs = [], [], []
+
+# turn on integrator to whatever negative gain
+pid.i = -10
+
+# set integral value above the maximum positive voltage
+pid.ival = 1.5
+
+#take 1000 points - jitter of the ethernet delay will add a noise here but we dont care
+for n in range(1000):
+    times.append(time())
+    ivals.append(pid.ival)
+    outputs.append(r.scope.voltage1)
+
+#plot
+import matplotlib.pyplot as plt
+%matplotlib inline
+times = np.array(times)-min(times)
+plt.plot(times,ivals,times,outputs);
+plt.xlabel(&quot;Time [s]&quot;);
+plt.ylabel(&quot;Voltage&quot;);
+</pre></div>
+</div>
+<p>Again, what do we see? We set up the pid module with a constant
+(positive) input from the ASG. We then turned on the integrator (with
+negative gain), which will inevitably lead to a slow drift of the output
+towards negative voltages (blue trace). We had set the integral value
+above the positive saturation voltage, such that it takes longer until
+it reaches the negative saturation voltage. The output of the pid module
+is bound to saturate at +- 1 Volts, which is clearly visible in the
+green trace. The value of the integral is internally represented by a 32
+bit number, so it can practically take arbitrarily large values compared
+to the 14 bit output. You can set it within the range from +4 to -4V,
+for example if you want to exloit the delay, or even if you want to
+compensate it with proportional gain.</p>
+</section>
+<section id="input-filters">
+<h4>Input filters<a class="headerlink" href="#input-filters" title="Link to this heading">¶</a></h4>
+<p>The pid module has one more feature: A bank of 4 input filters in
+series. These filters can be either off (bandwidth=0), lowpass
+(bandwidth positive) or highpass (bandwidth negative). The way these
+filters were implemented demands that the filter bandwidths can only
+take values that scale as the powers of 2.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># off by default
+r.pid0.inputfilter
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># minimum cutoff frequency is 2 Hz, maximum 77 kHz (for now)
+r.pid0.inputfilter = [1,1e10,-1,-1e10]
+print(r.pid0.inputfilter)
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># not setting a coefficient turns that filter off
+r.pid0.inputfilter = [0,4,8]
+print(r.pid0.inputfilter)
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># setting without list also works
+r.pid0.inputfilter = -2000
+print(r.pid0.inputfilter)
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># turn off again
+r.pid0.inputfilter = []
+print(r.pid0.inputfilter)
+</pre></div>
+</div>
+<p>You should now go back to the Scope and ASG example above and play
+around with the setting of these filters to convince yourself that they
+do what they are supposed to.</p>
+</section>
+</section>
+<section id="iq-module">
+<h3>IQ module<a class="headerlink" href="#iq-module" title="Link to this heading">¶</a></h3>
+<p>Demodulation of a signal means convolving it with a sine and cosine at
+the ‘carrier frequency’. The two resulting signals are usually low-pass
+filtered and called ‘quadrature I’ and ‘quadrature Q’. Based on this
+simple idea, the IQ module of pyrpl can implement several
+functionalities, depending on the particular setting of the various
+registers. In most cases, the configuration can be completely carried
+out through the setup function of the module.</p>
+<p>Lock-in detection / PDH / synchronous detection</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#reload to make sure settings are default ones</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyrpl</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pyrpl</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">Pyrpl</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="s2">&quot;192.168.1.100&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rp</span>
+
+<span class="c1">#shortcut</span>
+<span class="n">iq</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">iq0</span>
+
+<span class="c1"># modulation/demodulation frequency 25 MHz</span>
+<span class="c1"># two lowpass filters with 10 and 20 kHz bandwidth</span>
+<span class="c1"># input signal is analog input 1</span>
+<span class="c1"># input AC-coupled with cutoff frequency near 50 kHz</span>
+<span class="c1"># modulation amplitude 0.1 V</span>
+<span class="c1"># modulation goes to out1</span>
+<span class="c1"># output_signal is the demodulated quadrature 1</span>
+<span class="c1"># quadrature_1 is amplified by 10</span>
+<span class="n">iq</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">frequency</span><span class="o">=</span><span class="mf">25e6</span><span class="p">,</span> <span class="n">bandwidth</span><span class="o">=</span><span class="p">[</span><span class="mf">10e3</span><span class="p">,</span><span class="mf">20e3</span><span class="p">],</span> <span class="n">gain</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+         <span class="n">phase</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">acbandwidth</span><span class="o">=</span><span class="mi">50000</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+         <span class="nb">input</span><span class="o">=</span><span class="s1">&#39;adc1&#39;</span><span class="p">,</span> <span class="n">output_direct</span><span class="o">=</span><span class="s1">&#39;out1&#39;</span><span class="p">,</span>
+         <span class="n">output_signal</span><span class="o">=</span><span class="s1">&#39;quadrature&#39;</span><span class="p">,</span> <span class="n">quadrature_factor</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>After this setup, the demodulated quadrature is available as the
+output_signal of iq0, and can serve for example as the input of a PID
+module to stabilize the frequency of a laser to a reference cavity. The
+module was tested and is in daily use in our lab. Frequencies as low as
+20 Hz and as high as 50 MHz have been used for this technique. At the
+present time, the functionality of a PDH-like detection as the one set
+up above cannot be conveniently tested internally. We plan to upgrade
+the IQ-module to VCO functionality in the near future, which will also
+enable testing the PDH functionality.</p>
+<section id="network-analyzer">
+<h4>Network analyzer<a class="headerlink" href="#network-analyzer" title="Link to this heading">¶</a></h4>
+<p>When implementing complex functionality in the RedPitaya, the network
+analyzer module is by far the most useful tool for diagnostics. The
+network analyzer is able to probe the transfer function of any other
+module or external device by exciting the device with a sine of variable
+frequency and analyzing the resulting output from that device. This is
+done by demodulating the device output (=network analyzer input) with
+the same sine that was used for the excitation and a corresponding
+cosine, lowpass-filtering, and averaging the two quadratures for a
+well-defined number of cycles. From the two quadratures, one can extract
+the magnitude and phase shift of the device’s transfer function at the
+probed frequencies. Let’s illustrate the behaviour. For this example,
+you should connect output 1 to input 1 of your RedPitaya, such that we
+can compare the analog transfer function to a reference. Make sure you
+put a 50 Ohm terminator in parallel with input 1.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># shortcut for na
+na = r.na
+na.iq_name = &#39;iq1&#39;
+
+#take transfer functions. first: iq1 -&gt; iq1, second iq1-&gt;out1-&gt;(your cable)-&gt;adc1
+f, iq1, amplitudes = na.single(start=1e3,stop=62.5e6,points=1001,rbw=1000,avg=1,amplitude=0.2,input=&#39;iq1&#39;,output_direct=&#39;off&#39;, acbandwidth=0)
+f, adc1, amplitudes = na.single(start=1e3,stop=62.5e6,points=1001,rbw=1000,avg=1,amplitude=0.2,input=&#39;adc1&#39;,output_direct=&#39;out1&#39;, acbandwidth=0)
+
+#plot
+from pyrpl.iir import bodeplot
+%matplotlib inline
+bodeplot([(f, iq1, &quot;iq1-&gt;iq1&quot;), (f, adc1, &quot;iq1-&gt;out1-&gt;in1-&gt;iq1&quot;)], xlog=True)
+</pre></div>
+</div>
+<p>If your cable is properly connected, you will see that both magnitudes
+are near 0 dB over most of the frequency range. Near the Nyquist
+frequency (62.5 MHz), one can see that the internal signal remains flat
+while the analog signal is strongly attenuated, as it should be to avoid
+aliasing. One can also see that the delay (phase lag) of the internal
+signal is much less than the one through the analog signal path.</p>
+<p>If you have executed the last example (PDH detection) in this python
+session, iq0 should still send a modulation to out1, which is added to
+the signal of the network analyzer, and sampled by input1. In this case,
+you should see a little peak near the PDH modulation frequency, which
+was 25 MHz in the example above.</p>
+</section>
+<section id="lorentzian-bandpass-filter">
+<h4>Lorentzian bandpass filter<a class="headerlink" href="#lorentzian-bandpass-filter" title="Link to this heading">¶</a></h4>
+<p>The iq module can also be used as a bandpass filter with continuously
+tunable phase. Let’s measure the transfer function of such a bandpass
+with the network analyzer:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># shortcut for na and bpf (bandpass filter)
+na = r.na
+na.iq_name = &#39;iq1&#39;
+bpf = r.iq2
+
+# setup bandpass
+bpf.setup(frequency = 2.5e6, #center frequency
+          Q=10.0, # the filter quality factor
+          acbandwidth = 10e5, # ac filter to remove pot. input offsets
+          phase=0, # nominal phase at center frequency (propagation phase lags not accounted for)
+          gain=2.0, # peak gain = +6 dB
+          output_direct=&#39;off&#39;,
+          output_signal=&#39;output_direct&#39;,
+          input=&#39;iq1&#39;)
+
+# take transfer function
+f, tf1, ampl = na.single(start=1e5, stop=4e6, points=201, rbw=100, avg=3,
+                     amplitude=0.2, input=&#39;iq2&#39;,output_direct=&#39;off&#39;)
+
+# add a phase advance of 82.3 degrees and measure transfer function
+bpf.phase = 82.3
+f, tf2, ampl = na.single(start=1e5, stop=4e6, points=201, rbw=100, avg=3,
+                     amplitude=0.2, input=&#39;iq2&#39;,output_direct=&#39;off&#39;)
+
+#plot
+from pyrpl.iir import bodeplot
+%matplotlib inline
+bodeplot([(f, tf1, &quot;phase = 0.0&quot;), (f, tf2, &quot;phase = %.1f&quot;%bpf.phase)])
+</pre></div>
+</div>
+</section>
+<section id="frequency-comparator-module">
+<h4>Frequency comparator module<a class="headerlink" href="#frequency-comparator-module" title="Link to this heading">¶</a></h4>
+<p>To lock the frequency of a VCO (Voltage controlled oscillator) to a
+frequency reference defined by the RedPitaya, the IQ module contains the
+frequency comparator block. This is how you set it up. You have to feed
+the output of this module through a PID block to send it to the analog
+output. As you will see, if your feedback is not already enabled when
+you turn on the module, its integrator will rapidly saturate (-585 is
+the maximum value here, while a value of the order of 1e-3 indicates a
+reasonable frequency lock).</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>iq = r.iq0
+
+# turn off pfd module for settings
+iq.pfd_on = False
+
+# local oscillator frequency
+iq.frequency = 33.7e6
+
+# local oscillator phase
+iq.phase = 0
+iq.input = &#39;adc1&#39;
+iq.output_direct = &#39;off&#39;
+iq.output_signal = &#39;pfd&#39;
+
+print(&quot;Before turning on:&quot;)
+print(&quot;Frequency difference error integral&quot;, iq.pfd_integral)
+
+print(&quot;After turning on:&quot;)
+iq.pfd_on = True
+for i in range(10):
+    print(&quot;Frequency difference error integral&quot;, iq.pfd_integral)
+</pre></div>
+</div>
+</section>
+</section>
+<section id="iir-module">
+<h3>IIR module<a class="headerlink" href="#iir-module" title="Link to this heading">¶</a></h3>
+<p>Sometimes it is interesting to realize even more complicated filters.
+This is the case, for example, when a piezo resonance limits the maximum
+gain of a feedback loop. For these situations, the IIR module can
+implement filters with ‘Infinite Impulse Response’
+(<a class="reference external" href="https://en.wikipedia.org/wiki/Infinite_impulse_response">https://en.wikipedia.org/wiki/Infinite_impulse_response</a>). It is the
+your task to choose the filter to be implemented by specifying the
+complex values of the poles and zeros of the filter. In the current
+version of pyrpl, the IIR module can implement IIR filters with the
+following properties: - strictly proper transfer function (number of
+poles &gt; number of zeros) - poles (zeros) either real or
+complex-conjugate pairs - no three or more identical real poles (zeros)
+- no two or more identical pairs of complex conjugate poles (zeros) -
+pole and zero frequencies should be larger than
+<span class="math notranslate nohighlight">\(\frac{f_{\mathrm{nyquist}}}{1000}\)</span> (but you can optimize the nyquist
+frequency of your filter by tuning the ‘loops’ parameter) - the DC-gain
+of the filter must be 1.0. Despite the FPGA implemention being more
+flexible, we found this constraint rather practical. If you need
+different behavior, pass the IIR signal through a PID module and use its
+input filter and proportional gain. If you still need different
+behaviour, the file iir.py is a good starting point. - total filter
+order &lt;= 16 (realizable with 8 parallel biquads) - a remaining bug
+limits the dynamic range to about 30 dB before internal saturation
+interferes with filter performance</p>
+<p>Filters whose poles have a positive real part are unstable by design.
+Zeros with positive real part lead to non-minimum phase lag.
+Nevertheless, the IIR module will let you implement these filters.</p>
+<p>In general the IIR module is still fragile in the sense that you should
+verify the correct implementation of each filter you design. Usually you
+can trust the simulated transfer function. It is nevertheless a good
+idea to use the internal network analyzer module to actually measure the
+IIR transfer function with an amplitude comparable to the signal you
+expect to go through the filter, as to verify that no saturation of
+internal filter signals limits its performance.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>#reload to make sure settings are default ones
+from pyrpl import RedPitaya
+r = RedPitaya(hostname=&quot;192.168.1.100&quot;)
+
+#shortcut
+iir = r.iir
+
+#print docstring of the setup function
+print(iir.setup.__doc__)
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>#prepare plot parameters
+%matplotlib inline
+import matplotlib
+matplotlib.rcParams[&#39;figure.figsize&#39;] = (10, 6)
+
+#setup a complicated transfer function
+zeros = [ -4e4j-300, +4e4j-300,-2e5j-1000, +2e5j-1000, -2e6j-3000, +2e6j-3000]
+poles = [ -1e6, -5e4j-300, +5e4j-300, -1e5j-3000, +1e5j-3000, -1e6j-30000, +1e6j-30000]
+designdata = iir.setup(zeros, poles, loops=None, plot=True);
+print(&quot;Filter sampling frequency: &quot;, 125./iir.loops,&quot;MHz&quot;)
+</pre></div>
+</div>
+<p>If you try changing a few coefficients, you will see that your design
+filter is not always properly realized. The bottleneck here is the
+conversion from the analytical expression (poles and zeros) to the
+filter coefficients, not the FPGA performance. This conversion is (among
+other things) limited by floating point precision. We hope to provide a
+more robust algorithm in future versions. If you can obtain filter
+coefficients by another, preferrably analytical method, this might lead
+to better results than our generic algorithm.</p>
+<p>Let’s check if the filter is really working as it is supposed:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># first thing to check if the filter is not ok
+print(&quot;IIR overflows before:&quot;, bool(iir.overflow))
+
+# measure tf of iir filter
+r.iir.input = &#39;iq1&#39;
+f, tf, ampl = r.na.single(iq_name=&#39;iq1&#39;, start=1e4, stop=3e6, points = 301, rbw=100, avg=1,
+                       amplitude=0.1, input=&#39;iir&#39;, output_direct=&#39;off&#39;, logscale=True)
+
+# first thing to check if the filter is not ok
+print(&quot;IIR overflows after:&quot;, bool(iir.overflow))
+
+#plot with design data
+%matplotlib inline
+import matplotlib
+matplotlib.rcParams[&#39;figure.figsize&#39;] = (10, 6)
+from pyrpl.iir import bodeplot
+bodeplot(designdata +[(f,tf,&quot;measured system&quot;)],xlog=True)
+</pre></div>
+</div>
+<p>As you can see, the filter has trouble to realize large dynamic ranges.
+With the current standard design software, it takes some ‘practice’ to
+design transfer functions which are properly implemented by the code.
+While most zeros are properly realized by the filter, you see that the
+first two poles suffer from some kind of saturation. We are working on
+an automatic rescaling of the coefficients to allow for optimum dynamic
+range. From the overflow register printed above the plot, you can also
+see that the network analyzer scan caused an internal overflow in the
+filter. All these are signs that different parameters should be tried.</p>
+<p>A straightforward way to impove filter performance is to adjust the
+DC-gain and compensate it later with the gain of a subsequent PID
+module. See for yourself what the parameter g=0.1 (instead of the
+default value g=1.0) does here:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>#rescale the filter by 20fold reduction of DC gain
+designdata = iir.setup(zeros,poles,g=0.1,loops=None,plot=False);
+
+# first thing to check if the filter is not ok
+print(&quot;IIR overflows before:&quot;, bool(iir.overflow))
+
+# measure tf of iir filter
+r.iir.input = &#39;iq1&#39;
+f, tf, ampl = r.iq1.na_trace(start=1e4, stop=3e6, points = 301, rbw=100, avg=1,
+                       amplitude=0.1, input=&#39;iir&#39;, output_direct=&#39;off&#39;, logscale=True)
+
+# first thing to check if the filter is not ok
+print(&quot;IIR overflows after:&quot;, bool(iir.overflow))
+
+#plot with design data
+%matplotlib inline
+pylab.rcParams[&#39;figure.figsize&#39;] = (10, 6)
+from pyrpl.iir import bodeplot
+bodeplot(designdata+[(f,tf,&quot;measured system&quot;)],xlog=True)
+</pre></div>
+</div>
+<p>You see that we have improved the second peak (and avoided internal
+overflows) at the cost of increased nosie in other regions. Of course
+this noise can be reduced by increasing the NA averaging time. But maybe
+it will be detrimental to your application? After all, IIR filter design
+is far from trivial, but this tutorial should have given you enough
+information to get started and maybe to improve the way we have
+implemented the filter in pyrpl (e.g. by implementing automated filter
+coefficient scaling).</p>
+<p>If you plan to play more with the filter, these are the remaining
+internal iir registers:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>iir = r.iir
+
+# useful diagnostic functions
+prin(&quot;IIR on:&quot;, iir.on)
+prin(&quot;IIR bypassed:&quot;, iir.shortcut)
+prin(&quot;IIR copydata:&quot;, iir.copydata)
+prin(&quot;IIR loops:&quot;, iir.loops)
+prin(&quot;IIR overflows:&quot;, bin(iir.overflow))
+prin(&quot;\nCoefficients (6 per biquad):&quot;
+print(iir.coefficients)
+
+# set the unity transfer function to the filter
+iir._setup_unity()
+</pre></div>
+</div>
+</section>
+</section>
+<section id="the-pyrpl-class">
+<h2>6) The Pyrpl class<a class="headerlink" href="#the-pyrpl-class" title="Link to this heading">¶</a></h2>
+<p>The RedPitayas in our lab are mostly used to stabilize one item or
+another in quantum optics experiments. To do so, the experimenter
+usually does not want to bother with the detailed implementation on the
+RedPitaya while trying to understand the physics going on in her/his
+experiment. For this situation, we have developed the Pyrpl class, which
+provides an API with high-level functions such as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># optimial pdh-lock with setpoint 0.1 cavity bandwidth away from resonance</span>
+<span class="n">cavity</span><span class="o">.</span><span class="n">lock</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;pdh&#39;</span><span class="p">,</span><span class="n">detuning</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+
+<span class="c1"># unlock the cavity</span>
+<span class="n">cavity</span><span class="o">.</span><span class="n">unlock</span><span class="p">()</span>
+
+<span class="c1"># calibrate the fringe height of an interferometer, and lock it at local oscillator phase 45 degrees</span>
+<span class="n">interferometer</span><span class="o">.</span><span class="n">lock</span><span class="p">(</span><span class="n">phase</span><span class="o">=</span><span class="mf">45.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="first-attempts-at-locking">
+<h3>First attempts at locking<a class="headerlink" href="#first-attempts-at-locking" title="Link to this heading">¶</a></h3>
+<p>SECTION NOT READY YET, BECAUSE CODE NOT CLEANED YET</p>
+<p>Now lets go for a first attempt to lock something. Say you connect the
+error signal (transmission or reflection) of your setup to input 1. Make
+sure that the peak-to-peak of the error signal coincides with the
+maximum voltages the RedPitaya can handle (-1 to +1 V if the jumpers are
+set to LV). This is important for getting optimal noise performance. If
+your signal is too low, amplify it. If it is too high, you should build
+a voltage divider with 2 resistors of the order of a few kOhm (that way,
+the input impedance of the RedPitaya of 1 MOhm does not interfere).</p>
+<p>Next, connect output 1 to the standard actuator at your hand, e.g. a
+piezo. Again, you should try to exploit the full -1 to +1 V output
+range. If the voltage at the actuator must be kept below 0.5V for
+example, you should make another voltage divider for this. Make sure
+that you take the input impedance of your actuator into consideration
+here. If you output needs to be amplified, it is best practice to put
+the voltage divider after the amplifier as to also attenuate the noise
+added by the amplifier. Hovever, when this poses a problem (limited
+bandwidth because of capacity of the actuator), you have to put the
+voltage divider before the amplifier. Also, this is the moment when you
+should think about low-pass filtering the actuator voltage. Because of
+DAC noise, analog low-pass filters are usually more effective than
+digital ones. A 3dB bandwidth of the order of 100 Hz is a good starting
+point for most piezos.</p>
+<p>You often need two actuators to control your cavity. This is because the
+output resolution of 14 bits can only realize 16384 different values.
+This would mean that with a finesse of 15000, you would only be able to
+set it to resonance or a linewidth away from it, but nothing in between.
+To solve this, use a coarse actuator to cover at least one free spectral
+range which brings you near the resonance, and a fine one whose range is
+1000 or 10000 times smaller and who gives you lots of graduation around
+the resonance. The coarse actuator should be strongly low-pass filtered
+(typical bandwidth of 1Hz or even less), the fine actuator can have 100
+Hz or even higher bandwidth. Do not get confused here: the unity-gain
+frequency of your final lock can be 10- or even 100-fold above the 3dB
+bandwidth of the analog filter at the output - it suffices to increase
+the proportional gain of the RedPitaya Lockbox.</p>
+<p>Once everything is connected, let’s grab a PID module, make a shortcut
+to it and print its helpstring. All modules have a metho help() which
+prints all available registers and their description:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>pid = r.pid0
+print(pid.help())
+pid.ival #bug: help forgets about pid.ival: current integrator value [volts]
+</pre></div>
+</div>
+<p>We need to inform our RedPitaya about which connections we want to make.
+The cabling discussed above translates into:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>pid.input = &#39;adc1&#39;
+pid.output_direct = &#39;out1&#39;
+
+#see other available options just for curiosity:
+print(pid.inputs)
+print(pid.output_directs)
+</pre></div>
+</div>
+<p>Finally, we need to define a setpoint. Lets first measure the offset
+when the laser is away from the resonance, and then measure or estimate
+how much light gets through on resonance.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># turn on the laser
+offresonant = r.scope.voltage1 #volts at analog input 1 with the unlocked cavity
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># make a guess of what voltage you will measure at an optical resonance
+resonant = 0.5 #Volts at analog input 1
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># set the setpoint at relative reflection of 0.75 / rel. transmission of 0.25
+pid.setpoint = 0.75*offresonant + 0.25*resonant
+</pre></div>
+</div>
+<p>Now lets start to approach the resonance. We need to figure out from
+which side we are coming. The choice is made such that a simple
+integrator will naturally drift into the resonance and stay there:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>pid.i = 0 # make sure gain is off
+pid.p = 0
+#errorsignal = adc1 - setpoint
+if resonant &gt; offresonant: # when we are away from resonance, error is negative.
+    slopesign = 1.0 # therefore, near resonance, the slope is positive as the error crosses zero.
+else:
+    slopesign = -1.0
+gainsign = -slopesign #the gain must be the opposite to stabilize
+# the effectove gain will in any case slopesign*gainsign = -1.
+
+#Therefore we must start at the maximum positive voltage, so the negative effective gain leads to a decreasing output
+pid.ival = 1.0 #sets the integrator value = output voltage to maximum
+
+from time import sleep
+sleep(1.0) #wait for the voltage to stabilize (adjust for a few times the lowpass filter bandwidth)
+
+#finally, turn on the integrator
+pid.i = gainsign * 0.1
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>#with a bit of luck, this should work
+from time import time
+t0 = time()
+while True:
+    relative_error = abs((r.scope.voltage1-pid.setpoint)/(offresonant-resonant))
+    if time()-t0 &gt; 2: #diagnostics every 2 seconds
+        print(&quot;relative error:&quot;, relative_error)
+        t0 = time()
+    if relative_error &lt; 0.1:
+        break
+    sleep(0.01)
+    if pid.ival &lt;= -1:
+        print(&quot;Resonance missed. Trying again slower..&quot;)
+        pid.ival = 1.2 #overshoot a little
+        pid.i /= 2
+print(&quot;Resonance approch successful&quot;
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from pyrpl import RedPitaya
+r = RedPitaya(hostname=&quot;192.168.1.100&quot;)
+
+#shortcut
+iq = r.iq0
+
+iq.setup(frequency=1000e3, bandwidth=[10e3,20e3], gain=0.0,
+         phase=0, acbandwidth=50000, amplitude=0.4,
+         input=&#39;adc1&#39;, output_direct=&#39;out1&#39;,
+         output_signal=&#39;output_direct&#39;, quadrature_factor=0)
+iq.frequency=10
+r.scope.input1=&#39;adc1&#39;
+
+# shortcut for na
+na = r.na
+na.iq_name = &quot;iq1&quot;
+
+# pid1 will be our device under test
+pid = r.pid0
+pid.input = &#39;iq1&#39;
+pid.i = 0
+pid.ival = 0
+pid.p = 1.0
+pid.setpoint = 0
+pid.inputfilter = []#[-1e3, 5e3, 20e3, 80e3]
+
+# take the transfer function through pid1, this will take a few seconds...
+x, y, ampl = na.single(start=0,stop=200e3,points=101,rbw=100,avg=1,amplitude=0.5,input=&#39;iq1&#39;,output_direct=&#39;off&#39;, acbandwidth=0)
+
+#plot
+import matplotlib.pyplot as plt
+%matplotlib inline
+import numpy as np
+plt.plot(x*1e-3,np.abs(y)**2);
+plt.xlabel(&quot;Frequency [kHz]&quot;);
+plt.ylabel(&quot;|S21|&quot;);
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>r.pid0.input = &#39;iq1&#39;
+r.pid0.output_direct=&#39;off&#39;
+r.iq2.input=&#39;iq1&#39;
+r.iq2.setup(0,bandwidth=0,gain=1.0,phase=0,acbandwidth=100,amplitude=0,input=&#39;iq1&#39;,output_direct=&#39;out1&#39;)
+r.pid0.p=0.1
+x,y = na.na_trace(start=1e4,stop=1e4,points=401,rbw=100,avg=1,amplitude=0.1,input=&#39;adc1&#39;,output_direct=&#39;off&#39;, acbandwidth=0)
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>r.iq2.frequency=1e6
+r.iq2._reads(0x140,4)
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>r.iq2._na_averages=125000000
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>r.iq0.output_direct=&#39;off&#39;
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>r.scope.input2=&#39;dac2&#39;
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>r.iq0.amplitude=0.5
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>r.iq0.amplitude
+</pre></div>
+</div>
+</section>
+</section>
+<section id="the-graphical-user-interface">
+<h2>7) The Graphical User Interface<a class="headerlink" href="#the-graphical-user-interface" title="Link to this heading">¶</a></h2>
+<p>Most of the modules described in section 5 can be controlled via a
+graphical user interface. The graphical window can be displayed with the
+following:</p>
+<p>WARNING: For the GUI to work fine within an ipython session, the option
+–gui=qt has to be given to the command launching ipython. This makes
+sure that an event loop is running.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Make sure the notebook was launched with the following option:
+# ipython notebook --pylab=qt
+from pyrpl.gui import RedPitayaGui
+r = RedPitayaGui(HOSTNAME)
+r.gui()
+</pre></div>
+</div>
+<p>The following window should open itself. Feel free to play with the
+button and tabs to start and stop the scope acquisition…</p>
+<p>The window is composed of several tabs, each corresponding to a
+particular module. Since they generate a graphical output, the scope,
+network analyzer, and spectrum analyzer modules are very pleasant to use
+in GUI mode. For instance, the scope tab can be used to display in
+real-time the waveforms acquired by the redpitaya scope. Since the
+refresh rate is quite good, the scope tab can be used to perform optical
+alignements or to monitor transient signals as one would do it with a
+standalone scope.</p>
+<p>Subclassing RedPitayaGui to customize the GUI</p>
+<p>It is often convenient to develop a GUI that relies heavily on the
+existing RedPitayaGui, but with a few more buttons or functionalities.
+In this case, the most convenient solution is to derive the RedPitayaGui
+class. The GUI is programmed using the framework PyQt4. The full
+documentation of the framework can be found here:
+<a class="reference external" href="http://pyqt.sourceforge.net/Docs/PyQt4/">http://pyqt.sourceforge.net/Docs/PyQt4/</a>. However, to quickly start in
+the right direction, a simple example of how to customize the gui is
+given below: The following code shows how to add a few buttons at the
+bottom of the scope tab to switch the experiment between the two states:
+Scanning with asg1/Locking with pid1</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>from pyrpl.gui import RedPitayaGui
+from PyQt4 import QtCore, QtGui
+
+class RedPitayaGuiCustom(RedPitayaGui):
+    &quot;&quot;&quot;
+    This is the derived class containing our customizations
+    &quot;&quot;&quot;
+
+    def customize_scope(self): #This function is called upon object instanciation
+        &quot;&quot;&quot;
+        By overwritting this function in the child class, the user can perform custom initializations.
+        &quot;&quot;&quot;
+
+        self.scope_widget.layout_custom = QtGui.QHBoxLayout()
+        #Adds an horizontal layout for our extra-buttons
+        self.scope_widget.button_scan = QtGui.QPushButton(&quot;Scan&quot;)
+        # creates a button &quot;Scan&quot;
+        self.scope_widget.button_lock = QtGui.QPushButton(&quot;Lock&quot;)
+        # creates a button &quot;Lock&quot;
+        self.scope_widget.label_setpoint = QtGui.QLabel(&quot;Setpoint&quot;)
+        # creates a label for the setpoint spinbox
+        self.scope_widget.spinbox_setpoint = QtGui.QDoubleSpinBox()
+        # creates a spinbox to enter the value of the setpoint
+        self.scope_widget.spinbox_setpoint.setDecimals(4)
+        # sets the desired number of decimals for the spinbox
+        self.scope_widget.spinbox_setpoint.setSingleStep(0.001)
+        # Change the step by which the setpoint is incremented when using the arrows
+
+        self.scope_widget.layout_custom.addWidget(self.scope_widget.button_scan)
+        self.scope_widget.layout_custom.addWidget(self.scope_widget.button_lock)
+        self.scope_widget.layout_custom.addWidget(self.scope_widget.label_setpoint)
+        self.scope_widget.layout_custom.addWidget(self.scope_widget.spinbox_setpoint)
+        # Adds the buttons in the layout
+
+        self.scope_widget.main_layout.addLayout(self.scope_widget.layout_custom)
+        # Adds the layout at the bottom of the scope layout
+
+        self.scope_widget.button_scan.clicked.connect(self.scan)
+        self.scope_widget.button_lock.clicked.connect(self.lock)
+        self.scope_widget.spinbox_setpoint.valueChanged.connect(self.change_setpoint)
+        # connects the buttons to the desired functions
+
+
+    def custom_setup(self): #This function is also called upon object instanciation
+        &quot;&quot;&quot;
+        By overwritting this function in the child class, the user can perform custom initializations.
+        &quot;&quot;&quot;
+
+        #setup asg1 to output the desired ramp
+        self.asg1.offset = .5
+        self.asg1.scale = 0.5
+        self.asg1.waveform = &quot;ramp&quot;
+        self.asg1.frequency = 100
+        self.asg1.trigger_source = &#39;immediately&#39;
+
+        #setup the scope to record approximately one period
+        self.scope.duration = 0.01
+        self.scope.input1 = &#39;dac1&#39;
+        self.scope.input2 = &#39;dac2&#39;
+        self.scope.trigger_source = &#39;asg1&#39;
+
+        #automatically start the scope
+        self.scope_widget.run_continuous()
+
+    def change_setpoint(self):
+        &quot;&quot;&quot;
+        Directly reflects the value of the spinbox into the pid0 setpoint
+        &quot;&quot;&quot;
+
+        self.pid0.setpoint = self.scope_widget.spinbox_setpoint.value()
+
+    def lock(self): #Called when button lock is clicked
+        &quot;&quot;&quot;
+        Set up everything in &quot;lock mode&quot;
+        &quot;&quot;&quot;
+
+        # disable button lock
+        self.scope_widget.button_lock.setEnabled(False)
+        # enable button scan
+        self.scope_widget.button_scan.setEnabled(True)
+
+
+        # shut down the asg
+        self.asg1.output_direct = &#39;off&#39;
+
+        # set pid input/outputs
+        self.pid0.input = &#39;adc1&#39;
+        self.pid0.output_direct = &#39;out2&#39;
+
+        #set pid parameters
+        self.pid0.setpoint = self.scope_widget.spinbox_setpoint.value()
+        self.pid0.p = 0.1
+        self.pid0.i = 100
+        self.pid0.ival = 0
+
+    def scan(self): #Called when button lock is clicked
+        &quot;&quot;&quot;
+        Set up everything in &quot;scan mode&quot;
+        &quot;&quot;&quot;
+
+        # enable button lock
+        self.scope_widget.button_lock.setEnabled(True)
+        # enable button scan
+        self.scope_widget.button_scan.setEnabled(False)
+        # switch asg on
+        self.asg1.output_direct = &#39;out2&#39;
+
+        #switch pid off
+        self.pid0.output_direct = &#39;off&#39;
+
+# Instantiate the class RePitayaGuiCustom
+r = RedPitayaGuiCustom(HOSTNAME)
+# launch the gui
+r.gui()
+</pre></div>
+</div>
+<p>Now, a custom gui with several extra buttons at the bottom of the scope
+tab should open itself. You can play with the buttons “scan” and “Lock”
+and see the effect on the channels.</p>
+</section>
+<section id="using-asynchronous-functions-with-python-3">
+<h2>8) Using asynchronous functions with python 3<a class="headerlink" href="#using-asynchronous-functions-with-python-3" title="Link to this heading">¶</a></h2>
+<p>Pyrpl uses the Qt eventloop to perform asynchronous tasks, but it has
+been set as the default loop of <code class="docutils literal notranslate"><span class="pre">asyncio</span></code>, such that you only need to
+learn how to use the standard python module
+<code class="docutils literal notranslate"><span class="pre">`asyncio</span></code> &lt;<a class="reference external" href="https://docs.python.org/3/library/asyncio.html">https://docs.python.org/3/library/asyncio.html</a>&gt;`__, and
+you don’t need to know anything about Qt. To give you a quick overview
+of what can be done, we present in the following block an exemple of 2
+tasks running in parrallele. The first one mimicks a temperature control
+loop, measuring periodically a signal every 1 s, and changing the offset
+of an <code class="docutils literal notranslate"><span class="pre">asg</span></code> based on the measured value (we realize this way a slow
+and rudimentary software pid). In parrallele, another task consists in
+repeatedly shifting the frequency of an asg, and measuring an averaged
+spectrum on the spectrum analyzer.</p>
+<p>Both tasks are defined by coroutines (a python function that is preceded
+by the keyword <code class="docutils literal notranslate"><span class="pre">async</span></code>, and that can contain the keyword <code class="docutils literal notranslate"><span class="pre">await</span></code>).
+Basically, the execution of each coroutine is interrupted whenever the
+keyword <code class="docutils literal notranslate"><span class="pre">await</span></code> is encountered, giving the chance to other tasks to be
+executed. It will only be resumed once the underlying coroutine’s value
+becomes ready.</p>
+<p>Finally to execute the cocroutines, it is not enough to call
+<code class="docutils literal notranslate"><span class="pre">my_coroutine()</span></code>, since we need to send the task to the event loop.
+For that, we use the function <code class="docutils literal notranslate"><span class="pre">ensure_future</span></code> from the asyncio module.
+This function immediately returns an object that is not the result of
+the task (not the object that is behind <code class="docutils literal notranslate"><span class="pre">return</span></code> inside the
+coroutine), but rather a Future object, that can be used to retrieve the
+actual result once it is ready (this is done by calling
+<code class="docutils literal notranslate"><span class="pre">future.result()</span></code> latter on).</p>
+<p>If you are executing the code inside the ipython notebook, then, this is
+all you have to do, since an event loop is already running in the back
+(a qt eventloop if you are using the option %pylab qt). Otherwise, you
+have to use one of the functions (<code class="docutils literal notranslate"><span class="pre">LOOP.run_forever()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">LOOP.run_until_complete()</span></code>, or <code class="docutils literal notranslate"><span class="pre">LOOP.run_in_executor()</span></code>) to launch
+the eventloop.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>%pylab qt
+from pyrpl import Pyrpl
+p = Pyrpl(&#39;test&#39;) # we have to do something about the notebook initializations...
+
+import asyncio
+
+async def run_temperature_lock(setpoint=0.1):  # coroutines can receive arguments
+    with p.asgs.pop(&quot;temperature&quot;) as asg: #  use the context manager &quot;with&quot; to
+    # make sure the asg will be freed after the acquisition
+        asg.setup(frequency=0, amplitue=0, offset=0) #  Use the asg as a dummy
+        while IS_TEMP_LOCK_ACTIVE: #  The loop will run untill this flag is manually changed to False
+                await asyncio.sleep(1) #  Give way to other coroutines for 1 s
+                measured_temp = asg.offset #  Dummy &quot;temperature&quot; measurment
+                asg.offset+= (setpoint - measured_temp)*0.1  #  feedback with an integral gain
+                print(&quot;measured temp: &quot;, measured_temp) #  print the measured value to see how the execution flow works
+
+async def run_n_fits(n): #  a coroutine to launch n acquisitions
+    sa = p.spectrumanalyzer
+    with p.asgs.pop(&quot;fit_spectra&quot;) as asg: # use contextmanager again
+        asg.setup(output_direct=&#39;out1&#39;,
+                  trigger_source=&#39;immediately&#39;)
+        freqs = []  #  variables stay available all along the coroutine&#39;s execution
+        for i in range(n): #  The coroutine qill be executed several times on the await statement inside this loop
+            asg.setup(frequency=1000*i) #  Move the asg frequency
+            sa.setup(input=asg, avg=10, span=100e3, baseband=True) #  setup the sa for the acquisition
+            spectrum = await sa.single_async() #  wait for 10 averages to be ready
+            freq = sa.data_x[spectrum.argmax()] #  take the max of the spectrum
+            freqs.append(freq) #  append it ti the result
+            print(&quot;measured peak frequency: &quot;, freq) #  print(to show how the execution goes
+        return freqs #  Once the execution is over, the Future will be filled with the result...
+
+from asyncio import ensure_future, get_event_loop
+IS_TEMP_LOCK_ACTIVE = True
+
+temp_future = ensure_future(run_temperature_lock(0.5)) # send temperature control task to the eventloop
+fits_future = ensure_future(run_n_fits(50)) # send spectrum measurement task to the eventloop
+
+## add the following lines if you don&#39;t already have an event_loop configured in ipython
+#  LOOP = get_event_loop()
+#  LOOP.run_until_complete()
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Populating</span> <span class="n">the</span> <span class="n">interactive</span> <span class="n">namespace</span> <span class="kn">from</span><span class="w"> </span><span class="nn">numpy</span> <span class="ow">and</span> <span class="n">matplotlib</span>
+</pre></div>
+</div>
+<pre class="literal-block"><a class="reference external" href="INFO:pyrpl.redpitaya:">INFO:pyrpl.redpitaya:</a>&gt;
+<a class="reference external" href="INFO:pyrpl.redpitaya:">INFO:pyrpl.redpitaya:</a>&gt;
+<a class="reference external" href="INFO:pyrpl.redpitaya:">INFO:pyrpl.redpitaya:</a>&gt;
+<a class="reference external" href="INFO:pyrpl.redpitaya:Server">INFO:pyrpl.redpitaya:Server</a> application started on port 2222
+<a class="reference external" href="INFO:pyrpl.modules:Filter">INFO:pyrpl.modules:Filter</a> sampling frequency is 25. MHz
+<a class="reference external" href="INFO:pyrpl.modules:IIR">INFO:pyrpl.modules:IIR</a> anti-aliasing input filter set to: 0.0 MHz
+<a class="reference external" href="INFO:pyrpl.modules:IIR">INFO:pyrpl.modules:IIR</a> filter ready
+C:UsersSamuelDocumentsGitHubpyrplpyrplhardware_modulesiiriir.py:262: RuntimeWarning: invalid value encountered in double_scalars
+  reldev = maxdev / abs(self.iirfilter.coefficients.flatten()[np.argmax(dev)])
+INFO:pyrpl.modules:Maximum deviation from design coefficients: 0 (relative: nan)
+INFO:pyrpl.modules:IIR Overflow pattern: 0b0
+INFO:pyrpl.redpitaya:Client started successfully.
+INFO:pyrpl.redpitaya:Successfully connected to Redpitaya with hostname 10.214.1.28.
+INFO:pyrpl.modules:Filter sampling frequency is 25. MHz
+INFO:pyrpl.modules:IIR anti-aliasing input filter set to: 0.0 MHz
+INFO:pyrpl.modules:IIR filter ready
+INFO:pyrpl.modules:Maximum deviation from design coefficients: 0 (relative: nan)
+INFO:pyrpl.modules:IIR Overflow pattern: 0b0
+WARNING:pyrpl.modules:Trying to load attribute amplitue of module asg1 that are invalid setup_attributes.</pre>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">measured</span> <span class="n">temp</span><span class="p">:</span>  <span class="mf">0.0</span>
+<span class="n">measured</span> <span class="n">peak</span> <span class="n">frequency</span><span class="p">:</span>  <span class="mf">0.0</span>
+<span class="n">measured</span> <span class="n">temp</span><span class="p">:</span>  <span class="mf">0.0499267578125</span>
+<span class="n">measured</span> <span class="n">temp</span><span class="p">:</span>  <span class="mf">0.0948486328125</span>
+<span class="n">measured</span> <span class="n">peak</span> <span class="n">frequency</span><span class="p">:</span>  <span class="mf">998.871152907</span>
+<span class="n">measured</span> <span class="n">temp</span><span class="p">:</span>  <span class="mf">0.13525390625</span>
+<span class="n">measured</span> <span class="n">temp</span><span class="p">:</span>  <span class="mf">0.171630859375</span>
+<span class="n">measured</span> <span class="n">peak</span> <span class="n">frequency</span><span class="p">:</span>  <span class="mf">1997.74230581</span>
+<span class="n">measured</span> <span class="n">temp</span><span class="p">:</span>  <span class="mf">0.2044677734375</span>
+<span class="n">measured</span> <span class="n">temp</span><span class="p">:</span>  <span class="mf">0.2340087890625</span>
+<span class="n">measured</span> <span class="n">peak</span> <span class="n">frequency</span><span class="p">:</span>  <span class="mf">2996.61345872</span>
+<span class="n">measured</span> <span class="n">temp</span><span class="p">:</span>  <span class="mf">0.260498046875</span>
+<span class="n">measured</span> <span class="n">temp</span><span class="p">:</span>  <span class="mf">0.284423828125</span>
+<span class="n">measured</span> <span class="n">peak</span> <span class="n">frequency</span><span class="p">:</span>  <span class="mf">4002.93887396</span>
+<span class="n">measured</span> <span class="n">temp</span><span class="p">:</span>  <span class="mf">0.305908203125</span>
+<span class="n">measured</span> <span class="n">temp</span><span class="p">:</span>  <span class="mf">0.3253173828125</span>
+<span class="n">measured</span> <span class="n">peak</span> <span class="n">frequency</span><span class="p">:</span>  <span class="mf">5001.81002687</span>
+<span class="n">measured</span> <span class="n">temp</span><span class="p">:</span>  <span class="mf">0.3427734375</span>
+<span class="n">measured</span> <span class="n">temp</span><span class="p">:</span>  <span class="mf">0.3583984375</span>
+<span class="n">measured</span> <span class="n">peak</span> <span class="n">frequency</span><span class="p">:</span>  <span class="mf">6000.68117978</span>
+<span class="n">measured</span> <span class="n">temp</span><span class="p">:</span>  <span class="mf">0.37255859375</span>
+<span class="n">measured</span> <span class="n">temp</span><span class="p">:</span>  <span class="mf">0.38525390625</span>
+<span class="n">measured</span> <span class="n">peak</span> <span class="n">frequency</span><span class="p">:</span>  <span class="mf">6999.55233268</span>
+<span class="n">measured</span> <span class="n">temp</span><span class="p">:</span>  <span class="mf">0.396728515625</span>
+<span class="n">measured</span> <span class="n">temp</span><span class="p">:</span>  <span class="mf">0.406982421875</span>
+<span class="n">measured</span> <span class="n">peak</span> <span class="n">frequency</span><span class="p">:</span>  <span class="mf">7998.42348559</span>
+<span class="n">measured</span> <span class="n">temp</span><span class="p">:</span>  <span class="mf">0.416259765625</span>
+<span class="n">measured</span> <span class="n">peak</span> <span class="n">frequency</span><span class="p">:</span>  <span class="mf">8997.2946385</span>
+<span class="n">measured</span> <span class="n">temp</span><span class="p">:</span>  <span class="mf">0.424560546875</span>
+<span class="n">measured</span> <span class="n">temp</span><span class="p">:</span>  <span class="mf">0.4320068359375</span>
+<span class="n">measured</span> <span class="n">peak</span> <span class="n">frequency</span><span class="p">:</span>  <span class="mf">10003.6200537</span>
+<span class="n">measured</span> <span class="n">temp</span><span class="p">:</span>  <span class="mf">0.438720703125</span>
+<span class="n">measured</span> <span class="n">temp</span><span class="p">:</span>  <span class="mf">0.44482421875</span>
+<span class="n">measured</span> <span class="n">peak</span> <span class="n">frequency</span><span class="p">:</span>  <span class="mf">11002.4912066</span>
+<span class="n">measured</span> <span class="n">temp</span><span class="p">:</span>  <span class="mf">0.4503173828125</span>
+<span class="n">measured</span> <span class="n">temp</span><span class="p">:</span>  <span class="mf">0.4552001953125</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>IS_TEMP_LOCK_ACTIVE = False #  hint, you can stop the spectrum acquisition task by pressin &quot;pause or stop in the
+print(fits_future.result())
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">---------------------------------------------------------------------------</span>
+
+<span class="n">InvalidStateError</span>                         <span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">)</span>
+
+<span class="o">&lt;</span><span class="n">ipython</span><span class="o">-</span><span class="nb">input</span><span class="o">-</span><span class="mi">2</span><span class="o">-</span><span class="mi">731</span><span class="n">b5bc52817</span><span class="o">&gt;</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span><span class="p">()</span>
+      <span class="mi">1</span> <span class="n">IS_TEMP_LOCK_ACTIVE</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="o">----&gt;</span> <span class="mi">2</span> <span class="nb">print</span><span class="p">(</span><span class="n">fits_future</span><span class="o">.</span><span class="n">result</span><span class="p">())</span>
+
+
+<span class="n">C</span><span class="p">:</span>\<span class="n">Users</span>\<span class="n">Samuel</span>\<span class="n">Anaconda3</span>\<span class="n">lib</span>\<span class="n">asyncio</span>\<span class="n">futures</span><span class="o">.</span><span class="n">py</span> <span class="ow">in</span> <span class="n">result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+    <span class="mi">285</span>             <span class="k">raise</span> <span class="n">CancelledError</span>
+    <span class="mi">286</span>         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">!=</span> <span class="n">_FINISHED</span><span class="p">:</span>
+<span class="o">--&gt;</span> <span class="mi">287</span>             <span class="k">raise</span> <span class="n">InvalidStateError</span><span class="p">(</span><span class="s1">&#39;Result is not ready.&#39;</span><span class="p">)</span>
+    <span class="mi">288</span>         <span class="bp">self</span><span class="o">.</span><span class="n">_log_traceback</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="mi">289</span>         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tb_logger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+
+
+<span class="n">InvalidStateError</span><span class="p">:</span> <span class="n">Result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">ready</span><span class="o">.</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">measured</span> <span class="n">peak</span> <span class="n">frequency</span><span class="p">:</span>  <span class="mf">12001.3623596</span>
+<span class="n">measured</span> <span class="n">temp</span><span class="p">:</span>  <span class="mf">0.4595947265625</span>
+<span class="n">measured</span> <span class="n">peak</span> <span class="n">frequency</span><span class="p">:</span>  <span class="mf">13000.2335125</span>
+<span class="n">measured</span> <span class="n">peak</span> <span class="n">frequency</span><span class="p">:</span>  <span class="mf">13999.1046654</span>
+<span class="n">measured</span> <span class="n">peak</span> <span class="n">frequency</span><span class="p">:</span>  <span class="mf">14997.9758183</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2014-2025, Leonhard Neuhaus, Samuel Deléglise, Michaël Croquette 
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Introduction to pyrpl</a><ul>
+<li><a class="reference internal" href="#introduction">1) Introduction</a></li>
+<li><a class="reference internal" href="#table-of-contents">2) Table of contents</a></li>
+<li><a class="reference internal" href="#installation">3) Installation</a><ul>
+<li><a class="reference internal" href="#option-1-install-the-latest-stable-release-with-uv-recommended">Option 1: Install the latest stable release with uv (recommended)</a></li>
+<li><a class="reference internal" href="#option-2-clone-the-repository-developers">Option 2: Clone the repository (developers)</a></li>
+<li><a class="reference internal" href="#option-3-existing-conda-environment-optional">Option 3: Existing conda environment (optional)</a></li>
+<li><a class="reference internal" href="#compiling-the-server-application-optional">Compiling the server application (optional)</a></li>
+<li><a class="reference internal" href="#compiling-the-fpga-bitfile-optional">Compiling the FPGA bitfile (optional)</a></li>
+<li><a class="reference internal" href="#unitary-tests-optional">Unitary tests (optional)</a></li>
+<li><a class="reference internal" href="#workflow-to-submit-code-changes-for-developers">Workflow to submit code changes (for developers)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#first-steps">4) First steps</a><ul>
+<li><a class="reference internal" href="#connecting-to-the-redpitaya">Connecting to the RedPitaya</a></li>
+<li><a class="reference internal" href="#basic-communication-with-your-redpitaya">Basic communication with your RedPitaya</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#redpitaya-modules">5) RedPitaya modules</a><ul>
+<li><a class="reference internal" href="#asg-and-scope-module">ASG and Scope module</a></li>
+<li><a class="reference internal" href="#arbitrary-signal-generator">Arbitrary Signal Generator</a></li>
+<li><a class="reference internal" href="#oscilloscope">Oscilloscope</a></li>
+<li><a class="reference internal" href="#pid-module">PID module</a><ul>
+<li><a class="reference internal" href="#proportional-and-integral-gain">Proportional and integral gain</a></li>
+<li><a class="reference internal" href="#control-with-the-integral-value-register">Control with the integral value register</a></li>
+<li><a class="reference internal" href="#input-filters">Input filters</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#iq-module">IQ module</a><ul>
+<li><a class="reference internal" href="#network-analyzer">Network analyzer</a></li>
+<li><a class="reference internal" href="#lorentzian-bandpass-filter">Lorentzian bandpass filter</a></li>
+<li><a class="reference internal" href="#frequency-comparator-module">Frequency comparator module</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#iir-module">IIR module</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#the-pyrpl-class">6) The Pyrpl class</a><ul>
+<li><a class="reference internal" href="#first-attempts-at-locking">First attempts at locking</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#the-graphical-user-interface">7) The Graphical User Interface</a></li>
+<li><a class="reference internal" href="#using-asynchronous-functions-with-python-3">8) Using asynchronous functions with python 3</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../../_static/documentation_options.js?v=81b53a12"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    </body>
+</html>

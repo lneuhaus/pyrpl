@@ -1,0 +1,1305 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="4. Basics of the PyRPL Architecture" href="basics.html"><link rel="prev" title="2. GUI instruments manual" href="gui.html">
+        <link rel="prefetch" href="_static/logo.png" as="image">
+
+    <link rel="shortcut icon" href="_static/icon.ico"><!-- Generated with Sphinx 7.4.7 and Furo 2025.12.19 -->
+        <title>3. API manual - pyrpl 0.9.9.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=fd3f3429" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #eeffcc;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">pyrpl 0.9.9.1 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="_static/logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">pyrpl 0.9.9.1 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">1. Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gui.html">2. GUI instruments manual</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">3. API manual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basics.html">4. Basics of the PyRPL Architecture</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="developer_guide/index.html">5. Notes for developers</a><input aria-label="Toggle navigation of 5. Notes for developers" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/contributing.html">5.1. Contributing to PyRPL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/fpga_compilation.html">5.2. Building the FPGA firmware</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/unittests.html">5.3. Unittests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/codingstyle.html">5.4. Coding style guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/codingworkflow.html">5.5. Workflow to submit code changes</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="developer_guide/api/index.html">5.6. API specifications from the moment of their development</a><input aria-label="Toggle navigation of 5.6. API specifications from the moment of their development" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/api/asynchronous/index.html">5.6.1. Requirements for an asynchronous interface compatible with python 3 asyncio</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/api/asynchronous/benchmark.html">5.6.2. Asynchronous sleep function and benchmarks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/api/spectrum.html">5.6.3. How a spectrum is computed in PyRPL</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/api/memory_tree.html">5.6.4. MemoryTree</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/api/attribute_and_module.html">5.6.5. Base classes Attributes and Module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/api/select_property.html">5.6.6. Starting to rewrite SelectAttribute/Property</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/api/acquisition_module.html">5.6.7. AcquisitionModule</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/api/lockbox.html">5.6.8. Lockbox</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/api/data_widget.html">5.6.9. DataWidget</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="developer_guide/dist/index.html">5.7. Distribution of pyrpl</a><input aria-label="Toggle navigation of 5.7. Distribution of pyrpl" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/dist/autodoc.html">5.7.1. Building the documentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/dist/executable.html">5.7.2. Building standalone applications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/dist/release.html">5.7.3. Preparing a release</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/sdcard.html">5.8. SD card preparation</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="gallery/index.html">Gallery of PyRPL usage examples</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="user_guide/index.html">User’s guide to PyRPL</a><input aria-label="Toggle navigation of User’s guide to PyRPL" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="user_guide/installation/index.html">Installation</a><input aria-label="Toggle navigation of Installation" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation/hardware_installation.html">Hardware installation for PyRPL</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation/pyrpl_installation.html">Installing PyRPL</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation/common_problems.html">Common installation problems</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation/user_dir.html">Directory for user data “PYRPL_USER_DIR”</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/tutorial/index.html">Quickstart Tutorial for PyRPL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/basics/index.html">Basics of PyRPL</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference_guide/index.html">Reference guide to PyRPL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_feedback.html">Feedback by PyRPL users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="publications.html">Publications about PyRPL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="thanks.html">Contributors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="thanks.html#funding-and-support">Funding and support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="thanks.html#about">About</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="_sources/api.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="api-manual">
+<h1><span class="section-number">3. </span>API manual<a class="headerlink" href="#api-manual" title="Link to this heading">¶</a></h1>
+<p>This manual will guide you step-by-step through the programming interface of each PyRPL modules.</p>
+<section id="first-steps">
+<h2><span class="section-number">3.1. </span>1 First steps<a class="headerlink" href="#first-steps" title="Link to this heading">¶</a></h2>
+<p>If the installation went well, you should now be able to load the
+package in python. If that works you can pass directly to the next
+section ‘Connecting to the RedPitaya’.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyrpl</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pyrpl</span>
+</pre></div>
+</div>
+<p>Sometimes, python has problems finding the path to pyrpl. In that
+case you should add the pyrplockbox directory to your pythonpath
+environment variable
+(<a class="reference external" href="http://stackoverflow.com/questions/3402168/permanently-add-a-directory-to-pythonpath">http://stackoverflow.com/questions/3402168/permanently-add-a-directory-to-pythonpath</a>).
+If you do not know how to do that, just manually navigate the ipython
+console to the directory, for example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">c</span><span class="p">:</span>\<span class="n">pyrpl</span><span class="o">-</span><span class="n">fpga</span>\<span class="n">github</span>\<span class="n">pyrpl</span>
+</pre></div>
+</div>
+<p>Now retry to load the module. It should really work now.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyrpl</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pyrpl</span>
+</pre></div>
+</div>
+<section id="connecting-to-the-redpitaya">
+<h3><span class="section-number">3.1.1. </span>Connecting to the RedPitaya<a class="headerlink" href="#connecting-to-the-redpitaya" title="Link to this heading">¶</a></h3>
+<p>You should have a working SD card (any version of the SD card content is
+okay) in your RedPitaya (for instructions see
+<a class="reference external" href="http://redpitaya.com/quick-start/">http://redpitaya.com/quick-start/</a>). The RedPitaya should be connected
+via ethernet to your computer. To set this up, there is plenty of
+instructions on the RedPitaya website
+(<a class="reference external" href="http://redpitaya.com/quick-start/">http://redpitaya.com/quick-start/</a>). If you type the ip address of your
+module in a browser, you should be able to start the different apps from
+the manufacturer. The default address is <a class="reference external" href="http://192.168.1.100">http://192.168.1.100</a>. If this
+works, we can load the python interface of pyrplockbox by specifying the
+RedPitaya’s ip address.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">HOSTNAME</span> <span class="o">=</span> <span class="s2">&quot;192.168.1.100&quot;</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyrpl</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pyrpl</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">Pyrpl</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="n">HOSTNAME</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you see at least one ‘&gt;’ symbol, your computer has successfully
+connected to your RedPitaya via SSH. This means that your connection
+works. The message ‘Server application started on port 2222’ means that
+your computer has successfully installed and started a server application
+on your RedPitaya. Once you get ‘Client started with success’, your
+python session has successfully connected to that server and all things
+are in place to get started.</p>
+</section>
+<section id="basic-communication-with-your-redpitaya">
+<h3><span class="section-number">3.1.2. </span>Basic communication with your RedPitaya<a class="headerlink" href="#basic-communication-with-your-redpitaya" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Access the RedPitaya object in charge of communicating with the board</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">rp</span>
+
+<span class="c1">#check the value of input1</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">scope</span><span class="o">.</span><span class="n">voltage1</span>
+</pre></div>
+</div>
+<p>With the last command, you have successfully retrieved a value from an
+FPGA register. This operation takes about 300 �s on my computer. So
+there is enough time to repeat the reading n times.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># see how the adc reading fluctuates over time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="n">times</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="p">[],[]</span>
+<span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+<span class="n">n</span> <span class="o">=</span> <span class="mi">3000</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+    <span class="n">times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">t0</span><span class="p">)</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">scope</span><span class="o">.</span><span class="n">voltage_in1</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Rough time to read one FPGA register: &quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">t0</span><span class="p">)</span><span class="o">/</span><span class="n">n</span><span class="o">*</span><span class="mf">1e6</span><span class="p">,</span> <span class="s2">&quot;�s&quot;</span><span class="p">)</span>
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+<span class="n">f</span><span class="p">,</span> <span class="n">axarr</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="s2">&quot;+&quot;</span><span class="p">)</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;ADC voltage vs time&quot;</span><span class="p">)</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">orientation</span><span class="o">=</span><span class="s2">&quot;horizontal&quot;</span><span class="p">)</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;ADC voltage histogram&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You see that the input values are not exactly zero. This is normal with
+all RedPitayas as some offsets are hard to keep zero when the
+environment changes (temperature etc.). So we will have to compensate
+for the offsets with our software. Another thing is that you see quite a
+bit of scatter beetween the points - almost as much that you do not see
+that the datapoints are quantized. The conclusion here is that the input
+noise is typically not totally negligible. Therefore we will need to use
+every trick at hand to get optimal noise performance.</p>
+<p>After reading from the RedPitaya, let’s now try to write to the register
+controlling the first 8 yellow LED’s on the board. The number written to
+the LED register is displayed on the LED array in binary representation.
+You should see some fast flashing of the yellow leds for a few seconds
+when you execute the next block.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#blink some leds for 5 seconds</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">time</span><span class="w"> </span><span class="kn">import</span> <span class="n">sleep</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1025</span><span class="p">):</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">hk</span><span class="o">.</span><span class="n">led</span><span class="o">=</span><span class="n">i</span>
+    <span class="n">sleep</span><span class="p">(</span><span class="mf">0.005</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># now feel free to play around a little to get familiar with binary representation by looking at the leds.</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">time</span><span class="w"> </span><span class="kn">import</span> <span class="n">sleep</span>
+<span class="n">r</span><span class="o">.</span><span class="n">hk</span><span class="o">.</span><span class="n">led</span> <span class="o">=</span> <span class="mb">0b00000001</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">hk</span><span class="o">.</span><span class="n">led</span> <span class="o">=</span> <span class="o">~</span><span class="n">r</span><span class="o">.</span><span class="n">hk</span><span class="o">.</span><span class="n">led</span><span class="o">&gt;&gt;</span><span class="mi">1</span>
+    <span class="n">sleep</span><span class="p">(</span><span class="mf">0.2</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">hk</span><span class="o">.</span><span class="n">led</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">255</span><span class="p">)</span>
+    <span class="n">sleep</span><span class="p">(</span><span class="mf">0.02</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="redpitaya-or-hardware-modules">
+<h2><span class="section-number">3.2. </span>2 RedPitaya (or Hardware) modules<a class="headerlink" href="#redpitaya-or-hardware-modules" title="Link to this heading">¶</a></h2>
+<p>Let’s now look a bit closer at the class RedPitaya. Besides managing the
+communication with your board, it contains different modules that
+represent the different sections of the FPGA. You already encountered
+two of them in the example above: “hk” and “scope”. Here is the full
+list of modules:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">r</span><span class="o">.</span><span class="n">hk</span> <span class="c1">#&quot;housekeeping&quot; = LEDs and digital inputs/outputs</span>
+<span class="n">r</span><span class="o">.</span><span class="n">ams</span> <span class="c1">#&quot;analog mixed signals&quot; = auxiliary ADCs and DACs.</span>
+
+<span class="n">r</span><span class="o">.</span><span class="n">scope</span> <span class="c1">#oscilloscope interface</span>
+
+<span class="n">r</span><span class="o">.</span><span class="n">asg0</span> <span class="c1">#&quot;arbitrary signal generator&quot; channel 0</span>
+<span class="n">r</span><span class="o">.</span><span class="n">asg1</span> <span class="c1">#&quot;arbitrary signal generator&quot; channel 1</span>
+
+<span class="n">r</span><span class="o">.</span><span class="n">pid0</span> <span class="c1">#first of three PID modules</span>
+<span class="n">r</span><span class="o">.</span><span class="n">pid1</span>
+<span class="n">r</span><span class="o">.</span><span class="n">pid2</span>
+
+<span class="n">r</span><span class="o">.</span><span class="n">iq0</span> <span class="c1">#first of three I+Q quadrature demodulation/modulation modules</span>
+<span class="n">r</span><span class="o">.</span><span class="n">iq1</span>
+<span class="n">r</span><span class="o">.</span><span class="n">iq2</span>
+
+<span class="n">r</span><span class="o">.</span><span class="n">iir</span> <span class="c1">#&quot;infinite impulse response&quot; filter module that can realize complex transfer functions</span>
+</pre></div>
+</div>
+<section id="asg-and-scope-module">
+<h3><span class="section-number">3.2.1. </span>ASG and Scope module<a class="headerlink" href="#asg-and-scope-module" title="Link to this heading">¶</a></h3>
+</section>
+<section id="module-pyrpl.hardware_modules.asg">
+<span id="arbitrary-signal-generator"></span><h3><span class="section-number">3.2.2. </span>Arbitrary Signal Generator<a class="headerlink" href="#module-pyrpl.hardware_modules.asg" title="Link to this heading">¶</a></h3>
+<p>There are two Arbitrary Signal Generator modules: asg1 and asg2. For
+these modules, any waveform composed of <span class="math notranslate nohighlight">\(2^{14}\)</span> programmable
+points is sent to the output with arbitrary frequency and start phase
+upon a trigger event.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>asg = r.asg1 # make a shortcut
+print(&quot;Trigger sources:&quot;, asg.trigger_sources)
+print(&quot;Output options: &quot;, asg.output_directs)
+</pre></div>
+</div>
+<p>Let’s set up the ASG to output a sawtooth signal of amplitude 0.8 V
+(peak-to-peak 1.6 V) at 1 MHz on output 2:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">asg</span><span class="o">.</span><span class="n">output_direct</span> <span class="o">=</span> <span class="s1">&#39;out2&#39;</span>
+<span class="n">asg</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">waveform</span><span class="o">=</span><span class="s1">&#39;halframp&#39;</span><span class="p">,</span>
+          <span class="n">frequency</span><span class="o">=</span><span class="mf">20e4</span><span class="p">,</span>
+          <span class="n">amplitude</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span>
+          <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+          <span class="n">trigger_source</span><span class="o">=</span><span class="s1">&#39;immediately&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="module-pyrpl.hardware_modules.scope">
+<span id="oscilloscope"></span><h3><span class="section-number">3.2.3. </span>Oscilloscope<a class="headerlink" href="#module-pyrpl.hardware_modules.scope" title="Link to this heading">¶</a></h3>
+<p>The scope works similar to the ASG but in reverse: Two channels are
+available. A table of <span class="math notranslate nohighlight">\(2^{14}\)</span> datapoints for each channel is
+filled with the time series of incoming data. Downloading a full trace
+takes about 10 ms over standard ethernet. The rate at which the memory
+is filled is the sampling rate (125 MHz) divided by the value of
+‘decimation’. The property ‘average’ decides whether each datapoint is a
+single sample or the average of all samples over the decimation
+interval.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">s</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">scope</span> <span class="c1"># shortcut</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Available decimation factors:&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">decimations</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Trigger sources:&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">trigger_sources</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Available inputs: &quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">inputs</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Let’s have a look at a signal generated by asg1. Later we will use
+convenience functions to reduce the amount of code necessary to set up
+the scope:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">asg</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">asg1</span>
+<span class="n">s</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">scope</span>
+
+<span class="c1"># turn off asg so the scope has a chance to measure its &quot;off-state&quot; as well</span>
+<span class="n">asg</span><span class="o">.</span><span class="n">output_direct</span> <span class="o">=</span> <span class="s2">&quot;off&quot;</span>
+
+<span class="c1"># setup scope</span>
+<span class="n">s</span><span class="o">.</span><span class="n">input1</span> <span class="o">=</span> <span class="s1">&#39;asg1&#39;</span>
+
+<span class="c1"># pass asg signal through pid0 with a simple integrator - just for fun</span>
+<span class="c1"># (detailed explanations for pid will follow)</span>
+<span class="n">r</span><span class="o">.</span><span class="n">pid0</span><span class="o">.</span><span class="n">input</span> <span class="o">=</span> <span class="s1">&#39;asg1&#39;</span>
+<span class="n">r</span><span class="o">.</span><span class="n">pid0</span><span class="o">.</span><span class="n">ival</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1"># reset the integrator to zero</span>
+<span class="n">r</span><span class="o">.</span><span class="n">pid0</span><span class="o">.</span><span class="n">i</span> <span class="o">=</span> <span class="mi">1000</span> <span class="c1"># unity gain frequency of 1000 hz</span>
+<span class="n">r</span><span class="o">.</span><span class="n">pid0</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="c1"># proportional gain of 1.0</span>
+<span class="n">r</span><span class="o">.</span><span class="n">pid0</span><span class="o">.</span><span class="n">inputfilter</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="c1"># leave input filter disabled for now</span>
+
+<span class="c1"># show pid output on channel2</span>
+<span class="n">s</span><span class="o">.</span><span class="n">input2</span> <span class="o">=</span> <span class="s1">&#39;pid0&#39;</span>
+
+<span class="c1"># trig at zero volt crossing</span>
+<span class="n">s</span><span class="o">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="c1"># positive/negative slope is detected by waiting for input to</span>
+<span class="c1"># sweep through hysteresis around the trigger threshold in</span>
+<span class="c1"># the right direction</span>
+<span class="n">s</span><span class="o">.</span><span class="n">hysteresis</span> <span class="o">=</span> <span class="mf">0.01</span>
+
+<span class="c1"># trigger on the input signal positive slope</span>
+<span class="n">s</span><span class="o">.</span><span class="n">trigger_source</span> <span class="o">=</span> <span class="s1">&#39;ch1_positive_edge&#39;</span>
+
+<span class="c1"># take data symetrically around the trigger event</span>
+<span class="n">s</span><span class="o">.</span><span class="n">trigger_delay</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="c1"># set decimation factor to 64 -&gt; full scope trace is 8ns * 2^14 * decimation = 8.3 ms long</span>
+<span class="n">s</span><span class="o">.</span><span class="n">decimation</span> <span class="o">=</span> <span class="mi">64</span>
+
+<span class="c1"># launch a single (asynchronous) curve acquisition, the asynchronous</span>
+<span class="c1"># acquisition means that the function returns immediately, eventhough the</span>
+<span class="c1"># data-acquisition is still going on.</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">single_async</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Before turning on asg:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Curve ready:&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">curve_ready</span><span class="p">())</span> <span class="c1"># trigger should still be armed</span>
+
+<span class="c1"># turn on asg and leave enough time for the scope to record the data</span>
+<span class="n">asg</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">frequency</span><span class="o">=</span><span class="mf">1e3</span><span class="p">,</span>
+          <span class="n">amplitude</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+          <span class="n">start_phase</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span>
+          <span class="n">waveform</span><span class="o">=</span><span class="s1">&#39;halframp&#39;</span><span class="p">,</span>
+          <span class="n">trigger_source</span><span class="o">=</span><span class="s1">&#39;immediately&#39;</span><span class="p">)</span>
+<span class="n">sleep</span><span class="p">(</span><span class="mf">0.010</span><span class="p">)</span>
+
+<span class="c1"># check that the trigger has been disarmed</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;After turning on asg:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Curve ready:&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">curve_ready</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Trigger event age [ms]:&quot;</span><span class="p">,</span><span class="mf">8e-9</span><span class="o">*</span><span class="p">((</span>
+<span class="n">s</span><span class="o">.</span><span class="n">current_timestamp</span><span class="o">&amp;</span><span class="mh">0xFFFFFFFFFFFFFFFF</span><span class="p">)</span> <span class="o">-</span> <span class="n">s</span><span class="o">.</span><span class="n">trigger_timestamp</span><span class="p">)</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span>
+
+<span class="c1"># The function single_async returns a *future* (or promise) of the curve. To</span>
+<span class="c1"># access the actual curve, use result()</span>
+<span class="n">ch1</span><span class="p">,</span> <span class="n">ch2</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+
+<span class="c1"># plot the data</span>
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">times</span><span class="o">*</span><span class="mf">1e3</span><span class="p">,</span> <span class="n">ch1</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">times</span><span class="o">*</span><span class="mf">1e3</span><span class="p">,</span> <span class="n">ch2</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Time [ms]&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Voltage&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>What do we see? The blue trace for channel 1 shows just the output
+signal of the asg. The time=0 corresponds to the trigger event. One can
+see that the trigger was not activated by the constant signal of 0 at
+the beginning, since it did not cross the hysteresis interval. One can
+also see a ‘bug’: After setting up the asg, it outputs the first value
+of its data table until its waveform output is triggered. For the
+halframp signal, as it is implemented in pyrpl, this is the maximally
+negative value. However, we passed the argument start_phase=90 to the
+asg.setup function, which shifts the first point by a quarter period.
+Can you guess what happens when we set start_phase=180? You should try
+it out!</p>
+<p>In green, we see the same signal, filtered through the pid module. The
+nonzero proportional gain leads to instant jumps along with the asg
+signal. The integrator is responsible for the constant decrease rate at
+the beginning, and the low-pass that smoothens the asg waveform a
+little. One can also foresee that, if we are not paying attention, too
+large an integrator gain will quickly saturate the outputs.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># useful functions for scope diagnostics</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Curve ready:&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">curve_ready</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Trigger source:&quot;</span><span class="p">,</span><span class="n">s</span><span class="o">.</span><span class="n">trigger_source</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Trigger threshold [V]:&quot;</span><span class="p">,</span><span class="n">s</span><span class="o">.</span><span class="n">threshold</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Averaging:&quot;</span><span class="p">,</span><span class="n">s</span><span class="o">.</span><span class="n">average</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Trigger delay [s]:&quot;</span><span class="p">,</span><span class="n">s</span><span class="o">.</span><span class="n">trigger_delay</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Trace duration [s]: &quot;</span><span class="p">,</span><span class="n">s</span><span class="o">.</span><span class="n">duration</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Trigger hysteresis [V]&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">hysteresis</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Current scope time [cycles]:&quot;</span><span class="p">,</span><span class="nb">hex</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">current_timestamp</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Trigger time [cycles]:&quot;</span><span class="p">,</span><span class="nb">hex</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">trigger_timestamp</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Current voltage on channel 1 [V]:&quot;</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">scope</span><span class="o">.</span><span class="n">voltage_in1</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;First point in data buffer 1 [V]:&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">ch1_firstpoint</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="module-pyrpl.hardware_modules.pid">
+<span id="pid-module"></span><h3><span class="section-number">3.2.4. </span>PID module<a class="headerlink" href="#module-pyrpl.hardware_modules.pid" title="Link to this heading">¶</a></h3>
+<p>We have already seen some use of the pid module above. There are three
+PID modules available: pid0 to pid2.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">pid0</span><span class="o">.</span><span class="n">help</span><span class="p">())</span>
+</pre></div>
+</div>
+<section id="proportional-and-integral-gain">
+<h4><span class="section-number">3.2.4.1. </span>Proportional and integral gain<a class="headerlink" href="#proportional-and-integral-gain" title="Link to this heading">¶</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#make shortcut</span>
+<span class="n">pid</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">pid0</span>
+
+<span class="c1">#turn off by setting gains to zero</span>
+<span class="n">pid</span><span class="o">.</span><span class="n">p</span><span class="p">,</span><span class="n">pid</span><span class="o">.</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span><span class="mi">0</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;P/I gain when turned off:&quot;</span><span class="p">,</span> <span class="n">pid</span><span class="o">.</span><span class="n">i</span><span class="p">,</span><span class="n">pid</span><span class="o">.</span><span class="n">p</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># small nonzero numbers set gain to minimum value - avoids rounding off to zero gain</span>
+<span class="n">pid</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="mf">1e-100</span>
+<span class="n">pid</span><span class="o">.</span><span class="n">i</span> <span class="o">=</span> <span class="mf">1e-100</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Minimum proportional gain: &quot;</span><span class="p">,</span> <span class="n">pid</span><span class="o">.</span><span class="n">p</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Minimum integral unity-gain frequency [Hz]: &quot;</span><span class="p">,</span> <span class="n">pid</span><span class="o">.</span><span class="n">i</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># saturation at maximum values</span>
+<span class="n">pid</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="mf">1e100</span>
+<span class="n">pid</span><span class="o">.</span><span class="n">i</span> <span class="o">=</span> <span class="mf">1e100</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Maximum proportional gain: &quot;</span><span class="p">,</span> <span class="n">pid</span><span class="o">.</span><span class="n">p</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Maximum integral unity-gain frequency [Hz]: &quot;</span><span class="p">,</span> <span class="n">pid</span><span class="o">.</span><span class="n">i</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="control-with-the-integral-value-register">
+<h4><span class="section-number">3.2.4.2. </span>Control with the integral value register<a class="headerlink" href="#control-with-the-integral-value-register" title="Link to this heading">¶</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="c1">#make shortcut</span>
+<span class="n">pid</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">pid0</span>
+
+<span class="c1"># set input to asg1</span>
+<span class="n">pid</span><span class="o">.</span><span class="n">input</span> <span class="o">=</span> <span class="s2">&quot;asg1&quot;</span>
+
+<span class="c1"># set asg to constant 0.1 Volts</span>
+<span class="n">r</span><span class="o">.</span><span class="n">asg1</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">waveform</span><span class="o">=</span><span class="s2">&quot;dc&quot;</span><span class="p">,</span> <span class="n">offset</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">)</span>
+
+<span class="c1"># set scope ch1 to pid0</span>
+<span class="n">r</span><span class="o">.</span><span class="n">scope</span><span class="o">.</span><span class="n">input1</span> <span class="o">=</span> <span class="s1">&#39;pid0&#39;</span>
+
+<span class="c1">#turn off the gains for now</span>
+<span class="n">pid</span><span class="o">.</span><span class="n">p</span><span class="p">,</span><span class="n">pid</span><span class="o">.</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+
+<span class="c1">#set integral value to zero</span>
+<span class="n">pid</span><span class="o">.</span><span class="n">ival</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="c1">#prepare data recording</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">time</span><span class="w"> </span><span class="kn">import</span> <span class="n">time</span>
+<span class="n">times</span><span class="p">,</span> <span class="n">ivals</span><span class="p">,</span> <span class="n">outputs</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+
+<span class="c1"># turn on integrator to whatever negative gain</span>
+<span class="n">pid</span><span class="o">.</span><span class="n">i</span> <span class="o">=</span> <span class="o">-</span><span class="mi">10</span>
+
+<span class="c1"># set integral value above the maximum positive voltage</span>
+<span class="n">pid</span><span class="o">.</span><span class="n">ival</span> <span class="o">=</span> <span class="mf">1.5</span>
+
+<span class="c1">#take 1000 points - jitter of the ethernet delay will add a noise here but we dont care</span>
+<span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">):</span>
+    <span class="n">times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time</span><span class="p">())</span>
+    <span class="n">ivals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pid</span><span class="o">.</span><span class="n">ival</span><span class="p">)</span>
+    <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">scope</span><span class="o">.</span><span class="n">voltage_in1</span><span class="p">)</span>
+
+<span class="c1">#plot</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+<span class="n">times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">times</span><span class="p">)</span><span class="o">-</span><span class="nb">min</span><span class="p">(</span><span class="n">times</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">times</span><span class="p">,</span><span class="n">ivals</span><span class="p">,</span><span class="n">times</span><span class="p">,</span><span class="n">outputs</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Time [s]&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Voltage&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Again, what do we see? We set up the pid module with a constant
+(positive) input from the ASG. We then turned on the integrator (with
+negative gain), which will inevitably lead to a slow drift of the output
+towards negative voltages (blue trace). We had set the integral value
+above the positive saturation voltage, such that it takes longer until
+it reaches the negative saturation voltage. The output of the pid module
+is bound to saturate at +- 1 Volts, which is clearly visible in the
+green trace. The value of the integral is internally represented by a 32
+bit number, so it can practically take arbitrarily large values compared
+to the 14 bit output. You can set it within the range from +4 to -4V,
+for example if you want to exloit the delay, or even if you want to
+compensate it with proportional gain.</p>
+</section>
+<section id="input-filters">
+<h4><span class="section-number">3.2.4.3. </span>Input filters<a class="headerlink" href="#input-filters" title="Link to this heading">¶</a></h4>
+<p>The pid module has one more feature: A bank of 4 input filters in
+series. These filters can be either off (bandwidth=0), lowpass
+(bandwidth positive) or highpass (bandwidth negative). The way these
+filters were implemented demands that the filter bandwidths can only
+take values that scale as the powers of 2.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># off by default</span>
+<span class="n">r</span><span class="o">.</span><span class="n">pid0</span><span class="o">.</span><span class="n">inputfilter</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># minimum cutoff frequency is 1.1 Hz, maximum 3.1 MHz (for now)</span>
+<span class="n">r</span><span class="o">.</span><span class="n">pid0</span><span class="o">.</span><span class="n">inputfilter</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mf">1e10</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mf">1e10</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">pid0</span><span class="o">.</span><span class="n">inputfilter</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># not setting a coefficient turns that filter off</span>
+<span class="n">r</span><span class="o">.</span><span class="n">pid0</span><span class="o">.</span><span class="n">inputfilter</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">8</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">pid0</span><span class="o">.</span><span class="n">inputfilter</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># setting without list also works</span>
+<span class="n">r</span><span class="o">.</span><span class="n">pid0</span><span class="o">.</span><span class="n">inputfilter</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2000</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">pid0</span><span class="o">.</span><span class="n">inputfilter</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># turn off again</span>
+<span class="n">r</span><span class="o">.</span><span class="n">pid0</span><span class="o">.</span><span class="n">inputfilter</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">pid0</span><span class="o">.</span><span class="n">inputfilter</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You should now go back to the Scope and ASG example above and play
+around with the setting of these filters to convince yourself that they
+do what they are supposed to.</p>
+</section>
+</section>
+<section id="module-pyrpl.hardware_modules.iq">
+<span id="iq-module"></span><h3><span class="section-number">3.2.5. </span>IQ module<a class="headerlink" href="#module-pyrpl.hardware_modules.iq" title="Link to this heading">¶</a></h3>
+<p>Demodulation of a signal means convolving it with a sine and cosine at
+the ‘carrier frequency’. The two resulting signals are usually low-pass
+filtered and called ‘quadrature I’ and ‘quadrature Q’. Based on this
+simple idea, the IQ module of pyrpl can implement several
+functionalities, depending on the particular setting of the various
+registers. In most cases, the configuration can be completely carried
+out through the setup function of the module.</p>
+<p>Lock-in detection / PDH / synchronous detection</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#reload to make sure settings are default ones</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyrpl</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pyrpl</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">Pyrpl</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="s2">&quot;192.168.1.100&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rp</span>
+
+<span class="c1">#shortcut</span>
+<span class="n">iq</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">iq0</span>
+
+<span class="c1"># modulation/demodulation frequency 25 MHz</span>
+<span class="c1"># two lowpass filters with 10 and 20 kHz bandwidth</span>
+<span class="c1"># input signal is analog input 1</span>
+<span class="c1"># input AC-coupled with cutoff frequency near 50 kHz</span>
+<span class="c1"># modulation amplitude 0.1 V</span>
+<span class="c1"># modulation goes to out1</span>
+<span class="c1"># output_signal is the demodulated quadrature 1</span>
+<span class="c1"># quadrature_1 is amplified by 10</span>
+<span class="n">iq</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">frequency</span><span class="o">=</span><span class="mf">25e6</span><span class="p">,</span> <span class="n">bandwidth</span><span class="o">=</span><span class="p">[</span><span class="mf">10e3</span><span class="p">,</span><span class="mf">20e3</span><span class="p">],</span> <span class="n">gain</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+         <span class="n">phase</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">acbandwidth</span><span class="o">=</span><span class="mi">50000</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+         <span class="nb">input</span><span class="o">=</span><span class="s1">&#39;in1&#39;</span><span class="p">,</span> <span class="n">output_direct</span><span class="o">=</span><span class="s1">&#39;out1&#39;</span><span class="p">,</span>
+         <span class="n">output_signal</span><span class="o">=</span><span class="s1">&#39;quadrature&#39;</span><span class="p">,</span> <span class="n">quadrature_factor</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>After this setup, the demodulated quadrature is available as the
+output_signal of iq0, and can serve for example as the input of a PID
+module to stabilize the frequency of a laser to a reference cavity. The
+module was tested and is in daily use in our lab. Frequencies as low as
+20 Hz and as high as 50 MHz have been used for this technique. At the
+present time, the functionality of a PDH-like detection as the one set
+up above cannot be conveniently tested internally. We plan to upgrade
+the IQ-module to VCO functionality in the near future, which will also
+enable testing the PDH functionality.</p>
+<section id="network-analyzer">
+<h4><span class="section-number">3.2.5.1. </span>Network analyzer<a class="headerlink" href="#network-analyzer" title="Link to this heading">¶</a></h4>
+<p>When implementing complex functionality in the RedPitaya, the network
+analyzer module is by far the most useful tool for diagnostics. The
+network analyzer is able to probe the transfer function of any other
+module or external device by exciting the device with a sine of variable
+frequency and analyzing the resulting output from that device. This is
+done by demodulating the device output (=network analyzer input) with
+the same sine that was used for the excitation and a corresponding
+cosine, lowpass-filtering, and averaging the two quadratures for a
+well-defined number of cycles. From the two quadratures, one can extract
+the magnitude and phase shift of the device’s transfer function at the
+probed frequencies. Let’s illustrate the behaviour. For this example,
+you should connect output 1 to input 1 of your RedPitaya, such that we
+can compare the analog transfer function to a reference. Make sure you
+put a 50 Ohm terminator in parallel with input 1.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># shortcut for na</span>
+<span class="n">na</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">networkanalyzer</span>
+<span class="n">na</span><span class="o">.</span><span class="n">iq_name</span> <span class="o">=</span> <span class="s1">&#39;iq1&#39;</span>
+
+<span class="c1"># setup network analyzer with the right parameters</span>
+<span class="n">na</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="mf">1e3</span><span class="p">,</span><span class="n">stop</span><span class="o">=</span><span class="mf">62.5e6</span><span class="p">,</span><span class="n">points</span><span class="o">=</span><span class="mi">1001</span><span class="p">,</span><span class="n">rbw</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">avg</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="n">amplitude</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span><span class="nb">input</span><span class="o">=</span><span class="s1">&#39;iq1&#39;</span><span class="p">,</span><span class="n">output_direct</span><span class="o">=</span><span class="s1">&#39;off&#39;</span><span class="p">,</span> <span class="n">acbandwidth</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="c1">#take transfer functions. first: iq1 -&gt; iq1, second iq1-&gt;out1-&gt;(your cable)-&gt;adc1</span>
+<span class="n">iq1</span> <span class="o">=</span> <span class="n">na</span><span class="o">.</span><span class="n">single</span><span class="p">()</span>
+<span class="n">na</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="s1">&#39;in1&#39;</span><span class="p">,</span> <span class="n">output_direct</span><span class="o">=</span><span class="s1">&#39;out1&#39;</span><span class="p">)</span>
+<span class="n">in1</span> <span class="o">=</span> <span class="n">na</span><span class="o">.</span><span class="n">single</span><span class="p">()</span>
+
+<span class="c1"># get x-axis for plotting</span>
+<span class="n">f</span> <span class="o">=</span> <span class="n">na</span><span class="o">.</span><span class="n">frequencies</span>
+
+<span class="c1">#plot</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyrpl.hardware_modules.iir.iir_theory</span><span class="w"> </span><span class="kn">import</span> <span class="n">bodeplot</span>
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+<span class="n">bodeplot</span><span class="p">([(</span><span class="n">f</span><span class="p">,</span> <span class="n">iq1</span><span class="p">,</span> <span class="s2">&quot;iq1-&gt;iq1&quot;</span><span class="p">),</span> <span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">in1</span><span class="p">,</span> <span class="s2">&quot;iq1-&gt;out1-&gt;in1-&gt;iq1&quot;</span><span class="p">)],</span> <span class="n">xlog</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If your cable is properly connected, you will see that both magnitudes
+are near 0 dB over most of the frequency range. Near the Nyquist
+frequency (62.5 MHz), one can see that the internal signal remains flat
+while the analog signal is strongly attenuated, as it should be to avoid
+aliasing. One can also see that the delay (phase lag) of the internal
+signal is much less than the one through the analog signal path.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The Network Analyzer is implemented as a software module, distinct from the iq module. This is the reason why networkanalyzer is accessed directly at the Pyrpl-object level <em>p.networkanalyzer</em> and not at the redpitaya level <em>p.rp.networkanalyzer</em>. However, an iq module is reserved whenever the network analyzer is acquiring data.</p>
+</div>
+<p>If you have executed the last example (PDH detection) in this python
+session, iq0 should still send a modulation to out1, which is added to
+the signal of the network analyzer, and sampled by input1. In this case,
+you should see a little peak near the PDH modulation frequency, which
+was 25 MHz in the example above.</p>
+</section>
+<section id="lorentzian-bandpass-filter">
+<h4><span class="section-number">3.2.5.2. </span>Lorentzian bandpass filter<a class="headerlink" href="#lorentzian-bandpass-filter" title="Link to this heading">¶</a></h4>
+<p>The iq module can also be used as a bandpass filter with continuously
+tunable phase. Let’s measure the transfer function of such a bandpass
+with the network analyzer:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># shortcut for na and bpf (bandpass filter)</span>
+<span class="n">na</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">networkanalyzer</span>
+<span class="n">bpf</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">rp</span><span class="o">.</span><span class="n">iq2</span>
+
+<span class="c1"># setup bandpass</span>
+<span class="n">bpf</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">frequency</span> <span class="o">=</span> <span class="mf">2.5e6</span><span class="p">,</span> <span class="c1">#center frequency</span>
+          <span class="n">bandwidth</span><span class="o">=</span><span class="mf">1.e3</span><span class="p">,</span> <span class="c1"># the filter quality factor</span>
+          <span class="n">acbandwidth</span> <span class="o">=</span> <span class="mf">10e5</span><span class="p">,</span> <span class="c1"># ac filter to remove pot. input offsets</span>
+          <span class="n">phase</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="c1"># nominal phase at center frequency</span>
+          <span class="c1"># (propagation phase lags not accounted for)</span>
+          <span class="n">gain</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="c1"># peak gain = +6 dB</span>
+          <span class="n">output_direct</span><span class="o">=</span><span class="s1">&#39;off&#39;</span><span class="p">,</span>
+          <span class="n">output_signal</span><span class="o">=</span><span class="s1">&#39;output_direct&#39;</span><span class="p">,</span>
+          <span class="nb">input</span><span class="o">=</span><span class="s1">&#39;iq1&#39;</span><span class="p">)</span>
+
+<span class="c1"># setup the network analyzer</span>
+<span class="n">na</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="mf">1e5</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="mf">4e6</span><span class="p">,</span> <span class="n">points</span><span class="o">=</span><span class="mi">201</span><span class="p">,</span> <span class="n">rbw</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">avg</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                         <span class="n">amplitude</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="nb">input</span><span class="o">=</span><span class="s1">&#39;iq2&#39;</span><span class="p">,</span><span class="n">output_direct</span><span class="o">=</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
+
+<span class="c1"># take transfer function</span>
+<span class="n">tf1</span> <span class="o">=</span> <span class="n">na</span><span class="o">.</span><span class="n">single</span><span class="p">()</span>
+
+<span class="c1"># add a phase advance of 82.3 degrees and measure transfer function</span>
+<span class="n">bpf</span><span class="o">.</span><span class="n">phase</span> <span class="o">=</span> <span class="mf">82.3</span>
+<span class="n">tf2</span> <span class="o">=</span> <span class="n">na</span><span class="o">.</span><span class="n">single</span><span class="p">()</span>
+
+<span class="n">f</span> <span class="o">=</span> <span class="n">na</span><span class="o">.</span><span class="n">frequencies</span>
+
+<span class="c1">#plot</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyrpl.hardware_modules.iir.iir_theory</span><span class="w"> </span><span class="kn">import</span> <span class="n">bodeplot</span>
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+<span class="n">bodeplot</span><span class="p">([(</span><span class="n">f</span><span class="p">,</span> <span class="n">tf1</span><span class="p">,</span> <span class="s2">&quot;phase = 0.0&quot;</span><span class="p">),</span> <span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">tf2</span><span class="p">,</span> <span class="s2">&quot;phase = </span><span class="si">%.1f</span><span class="s2">&quot;</span><span class="o">%</span><span class="n">bpf</span><span class="o">.</span><span class="n">phase</span><span class="p">)])</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>To measure the transfer function of an internal module, we cannot
+use the <em>output_direct</em> property of the network ananlyzer (only ‘out1’,
+‘out2’ or ‘off’ are allowed). To circumvent the problem, we set the input of
+the module to be measured to the network analyzer’s iq.</p>
+</div>
+</section>
+<section id="frequency-comparator-module">
+<h4><span class="section-number">3.2.5.3. </span>Frequency comparator module<a class="headerlink" href="#frequency-comparator-module" title="Link to this heading">¶</a></h4>
+<p>To lock the frequency of a VCO (Voltage controlled oscillator) to a
+frequency reference defined by the RedPitaya, the IQ module contains the
+frequency comparator block. This is how you set it up. You have to feed
+the output of this module through a PID block to send it to the analog
+output. As you will see, if your feedback is not already enabled when
+you turn on the module, its integrator will rapidly saturate (-585 is
+the maximum value here, while a value of the order of 1e-3 indicates a
+reasonable frequency lock).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">iq</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">rp</span><span class="o">.</span><span class="n">iq0</span>
+
+<span class="c1"># turn off pfd module for settings</span>
+<span class="n">iq</span><span class="o">.</span><span class="n">pfd_on</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="c1"># local oscillator frequency</span>
+<span class="n">iq</span><span class="o">.</span><span class="n">frequency</span> <span class="o">=</span> <span class="mf">33.7e6</span>
+
+<span class="c1"># local oscillator phase</span>
+<span class="n">iq</span><span class="o">.</span><span class="n">phase</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">iq</span><span class="o">.</span><span class="n">input</span> <span class="o">=</span> <span class="s1">&#39;in1&#39;</span>
+<span class="n">iq</span><span class="o">.</span><span class="n">output_direct</span> <span class="o">=</span> <span class="s1">&#39;off&#39;</span>
+<span class="n">iq</span><span class="o">.</span><span class="n">output_signal</span> <span class="o">=</span> <span class="s1">&#39;pfd&#39;</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Before turning on:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Frequency difference error integral&quot;</span><span class="p">,</span> <span class="n">iq</span><span class="o">.</span><span class="n">pfd_integral</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;After turning on:&quot;</span><span class="p">)</span>
+<span class="n">iq</span><span class="o">.</span><span class="n">pfd_on</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Frequency difference error integral&quot;</span><span class="p">,</span> <span class="n">iq</span><span class="o">.</span><span class="n">pfd_integral</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="module-pyrpl.hardware_modules.iir">
+<span id="iir-module"></span><h3><span class="section-number">3.2.6. </span>IIR module<a class="headerlink" href="#module-pyrpl.hardware_modules.iir" title="Link to this heading">¶</a></h3>
+<p>Sometimes it is interesting to realize even more complicated filters.
+This is the case, for example, when a piezo resonance limits the maximum
+gain of a feedback loop. For these situations, the IIR module can
+implement filters with ‘Infinite Impulse Response’
+(<a class="reference external" href="https://en.wikipedia.org/wiki/Infinite_impulse_response">https://en.wikipedia.org/wiki/Infinite_impulse_response</a>). It is the
+your task to choose the filter to be implemented by specifying the
+complex values of the poles and zeros of the filter. In the current
+version of pyrpl, the IIR module can implement IIR filters with the
+following properties:</p>
+<ul class="simple">
+<li><p>strictly proper transfer function (number of poles &gt; number of zeros)</p></li>
+<li><p>poles (zeros) either real or complex-conjugate pairs</p></li>
+<li><p>no three or more identical real poles (zeros)</p></li>
+<li><p>no two or more identical pairs of complex conjugate poles (zeros)</p></li>
+<li><p>pole and zero frequencies should be larger than f_nyquist / 1000
+(but you can optimize the nyquist frequency of your filter by tuning
+the ‘loops’ parameter)</p></li>
+<li><p>the DC-gain of the filter must be 1.0. Despite the FPGA implemention being more flexible, we
+found this constraint rather practical. If you need different behavior, pass the IIR signal
+through a PID module and use its input filter and proportional gain. If you still need different
+behaviour, the file iir.py is a good starting point.</p></li>
+<li><p>total filter order &lt;= 16 (realizable with 8 parallel biquads)</p></li>
+<li><p>a remaining bug limits the dynamic range to about 30 dB before internal saturation interferes
+with filter performance</p></li>
+</ul>
+<p>Filters whose poles have a positive real part are unstable by design.
+Zeros with positive real part lead to non-minimum phase lag.
+Nevertheless, the IIR module will let you implement these filters.</p>
+<p>In general the IIR module is still fragile in the sense that you should
+verify the correct implementation of each filter you design. Usually you
+can trust the simulated transfer function. It is nevertheless a good
+idea to use the internal network analyzer module to actually measure the
+IIR transfer function with an amplitude comparable to the signal you
+expect to go through the filter, as to verify that no saturation of
+internal filter signals limits its performance.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#reload to make sure settings are default ones</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyrpl</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pyrpl</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">Pyrpl</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="s2">&quot;192.168.1.100&quot;</span><span class="p">)</span>
+
+<span class="c1">#shortcut</span>
+<span class="n">iir</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">rp</span><span class="o">.</span><span class="n">iir</span>
+
+<span class="c1">#print docstring of the setup function</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">iir</span><span class="o">.</span><span class="n">setup</span><span class="o">.</span><span class="vm">__doc__</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#prepare plot parameters</span>
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib</span>
+<span class="n">matplotlib</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;figure.figsize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+
+<span class="c1">#setup a complicated transfer function</span>
+<span class="n">zeros</span> <span class="o">=</span> <span class="p">[</span> <span class="mf">4e4j</span><span class="o">+</span><span class="mi">300</span><span class="p">,</span> <span class="o">+</span><span class="mf">2e5j</span><span class="o">+</span><span class="mi">1000</span><span class="p">,</span> <span class="o">+</span><span class="mf">2e6j</span><span class="o">+</span><span class="mi">3000</span><span class="p">]</span>
+<span class="n">poles</span> <span class="o">=</span> <span class="p">[</span> <span class="mf">1e6</span><span class="p">,</span> <span class="o">+</span><span class="mf">5e4j</span><span class="o">+</span><span class="mi">300</span><span class="p">,</span> <span class="mf">1e5j</span><span class="o">+</span><span class="mi">3000</span><span class="p">,</span> <span class="mf">1e6j</span><span class="o">+</span><span class="mi">30000</span><span class="p">]</span>
+<span class="n">iir</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">zeros</span><span class="o">=</span><span class="n">zeros</span><span class="p">,</span> <span class="n">poles</span><span class="o">=</span><span class="n">poles</span><span class="p">,</span> <span class="n">loops</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Filter sampling frequency: &quot;</span><span class="p">,</span> <span class="mf">125.</span><span class="o">/</span><span class="n">iir</span><span class="o">.</span><span class="n">loops</span><span class="p">,</span><span class="s2">&quot;MHz&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you try changing a few coefficients, you will see that your design
+filter is not always properly realized. The bottleneck here is the
+conversion from the analytical expression (poles and zeros) to the
+filter coefficients, not the FPGA performance. This conversion is (among
+other things) limited by floating point precision. We hope to provide a
+more robust algorithm in future versions. If you can obtain filter
+coefficients by another, preferrably analytical method, this might lead
+to better results than our generic algorithm.</p>
+<p>Let’s check if the filter is really working as it is supposed:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># first thing to check if the filter is not ok</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;IIR overflows before:&quot;</span><span class="p">,</span> <span class="nb">bool</span><span class="p">(</span><span class="n">iir</span><span class="o">.</span><span class="n">overflow</span><span class="p">))</span>
+<span class="n">na</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">networkanalyzer</span>
+
+<span class="c1"># measure tf of iir filter</span>
+<span class="n">iir</span><span class="o">.</span><span class="n">input</span> <span class="o">=</span> <span class="n">na</span><span class="o">.</span><span class="n">iq</span>
+<span class="n">na</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">iq_name</span><span class="o">=</span><span class="s1">&#39;iq1&#39;</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mf">1e4</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="mf">3e6</span><span class="p">,</span> <span class="n">points</span> <span class="o">=</span> <span class="mi">301</span><span class="p">,</span> <span class="n">rbw</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">avg</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+         <span class="n">amplitude</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="nb">input</span><span class="o">=</span><span class="s1">&#39;iir&#39;</span><span class="p">,</span> <span class="n">output_direct</span><span class="o">=</span><span class="s1">&#39;off&#39;</span><span class="p">,</span> <span class="n">logscale</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">tf</span> <span class="o">=</span> <span class="n">na</span><span class="o">.</span><span class="n">single</span><span class="p">()</span>
+
+<span class="c1"># first thing to check if the filter is not ok</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;IIR overflows after:&quot;</span><span class="p">,</span> <span class="nb">bool</span><span class="p">(</span><span class="n">iir</span><span class="o">.</span><span class="n">overflow</span><span class="p">))</span>
+
+<span class="c1"># retrieve designed transfer function</span>
+<span class="n">designdata</span> <span class="o">=</span> <span class="n">iir</span><span class="o">.</span><span class="n">transfer_function</span><span class="p">(</span><span class="n">na</span><span class="o">.</span><span class="n">frequencies</span><span class="p">)</span>
+
+
+<span class="c1">#plot with design data</span>
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib</span>
+<span class="n">matplotlib</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;figure.figsize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyrpl.hardware_modules.iir.iir_theory</span><span class="w"> </span><span class="kn">import</span> <span class="n">bodeplot</span>
+<span class="n">bodeplot</span><span class="p">([(</span><span class="n">na</span><span class="o">.</span><span class="n">frequencies</span><span class="p">,</span> <span class="n">designdata</span><span class="p">,</span> <span class="s2">&quot;designed system&quot;</span><span class="p">),</span>
+<span class="p">(</span><span class="n">na</span><span class="o">.</span><span class="n">frequencies</span><span class="p">,</span> <span class="n">tf</span><span class="p">,</span> <span class="s2">&quot;measured system&quot;</span><span class="p">)],</span> <span class="n">xlog</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>As you can see, the filter has trouble to realize large dynamic ranges.
+With the current standard design software, it takes some ‘practice’ to
+design transfer functions which are properly implemented by the code.
+While most zeros are properly realized by the filter, you see that the
+first two poles suffer from some kind of saturation. We are working on
+an automatic rescaling of the coefficients to allow for optimum dynamic
+range. From the overflow register printed above the plot, you can also
+see that the network analyzer scan caused an internal overflow in the
+filter. All these are signs that different parameters should be tried.</p>
+<p>A straightforward way to impove filter performance is to adjust the
+DC-gain and compensate it later with the gain of a subsequent PID
+module. See for yourself what the parameter g=0.1 (instead of the
+default value g=1.0) does here:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#rescale the filter by 20 fold reduction of DC gain</span>
+<span class="n">iir</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">zeros</span><span class="o">=</span><span class="n">zeros</span><span class="p">,</span> <span class="n">poles</span><span class="o">=</span><span class="n">poles</span><span class="p">,</span> <span class="n">g</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">loops</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># first thing to check if the filter is not ok</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;IIR overflows before:&quot;</span><span class="p">,</span> <span class="nb">bool</span><span class="p">(</span><span class="n">iir</span><span class="o">.</span><span class="n">overflow</span><span class="p">))</span>
+
+<span class="c1"># measure tf of iir filter</span>
+<span class="n">iir</span><span class="o">.</span><span class="n">input</span> <span class="o">=</span> <span class="n">na</span><span class="o">.</span><span class="n">iq</span>
+<span class="n">tf</span> <span class="o">=</span> <span class="n">na</span><span class="o">.</span><span class="n">single</span><span class="p">()</span>
+
+<span class="c1"># first thing to check if the filter is not ok</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;IIR overflows after:&quot;</span><span class="p">,</span> <span class="nb">bool</span><span class="p">(</span><span class="n">iir</span><span class="o">.</span><span class="n">overflow</span><span class="p">))</span>
+
+<span class="c1"># retrieve designed transfer function</span>
+<span class="n">designdata</span> <span class="o">=</span> <span class="n">iir</span><span class="o">.</span><span class="n">transfer_function</span><span class="p">(</span><span class="n">na</span><span class="o">.</span><span class="n">frequencies</span><span class="p">)</span>
+
+
+<span class="c1">#plot with design data</span>
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib</span>
+<span class="n">matplotlib</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;figure.figsize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyrpl.hardware_modules.iir.iir_theory</span><span class="w"> </span><span class="kn">import</span> <span class="n">bodeplot</span>
+<span class="n">bodeplot</span><span class="p">([(</span><span class="n">na</span><span class="o">.</span><span class="n">frequencies</span><span class="p">,</span> <span class="n">designdata</span><span class="p">,</span> <span class="s2">&quot;designed system&quot;</span><span class="p">),</span>
+<span class="p">(</span><span class="n">na</span><span class="o">.</span><span class="n">frequencies</span><span class="p">,</span> <span class="n">tf</span><span class="p">,</span> <span class="s2">&quot;measured system&quot;</span><span class="p">)],</span> <span class="n">xlog</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You see that we have improved the second peak (and avoided internal
+overflows) at the cost of increased noise in other regions. Of course
+this noise can be reduced by increasing the NA averaging time. But maybe
+it will be detrimental to your application? After all, IIR filter design
+is far from trivial, but this tutorial should have given you enough
+information to get started and maybe to improve the way we have
+implemented the filter in pyrpl (e.g. by implementing automated filter
+coefficient scaling).</p>
+<p>If you plan to play more with the filter, these are the remaining
+internal iir registers:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">iir</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">rp</span><span class="o">.</span><span class="n">iir</span>
+
+<span class="c1"># useful diagnostic functions</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;IIR on:&quot;</span><span class="p">,</span> <span class="n">iir</span><span class="o">.</span><span class="n">on</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;IIR bypassed:&quot;</span><span class="p">,</span> <span class="n">iir</span><span class="o">.</span><span class="n">shortcut</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;IIR copydata:&quot;</span><span class="p">,</span> <span class="n">iir</span><span class="o">.</span><span class="n">copydata</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;IIR loops:&quot;</span><span class="p">,</span> <span class="n">iir</span><span class="o">.</span><span class="n">loops</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;IIR overflows:&quot;</span><span class="p">,</span> <span class="nb">bin</span><span class="p">(</span><span class="n">iir</span><span class="o">.</span><span class="n">overflow</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Coefficients (6 per biquad):&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">iir</span><span class="o">.</span><span class="n">coefficients</span><span class="p">)</span>
+
+<span class="c1"># set the unity transfer function to the filter</span>
+<span class="n">iir</span><span class="o">.</span><span class="n">_setup_unity</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="pyrpl-or-software-modules">
+<h2><span class="section-number">3.3. </span>3 Pyrpl (or Software) modules<a class="headerlink" href="#pyrpl-or-software-modules" title="Link to this heading">¶</a></h2>
+<p>Software modules are modules that don’t have an FPGA counterpart. They are directly accessible at the root pyrpl object
+(no need to go through the redpitaya object). We have already encountered a software module above. Remember how we accessed the
+network analyzer module:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">HOSTNAME</span> <span class="o">=</span> <span class="s2">&quot;192.168.1.100&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyrpl</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pyrpl</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">Pyrpl</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="n">HOSTNAME</span><span class="p">)</span>
+
+<span class="c1"># hardware modules are members of the redpitaya object</span>
+<span class="n">p</span><span class="o">.</span><span class="n">rp</span><span class="o">.</span><span class="n">iq0</span>
+
+<span class="c1"># software modules are members of the root pyrpl object</span>
+<span class="n">p</span><span class="o">.</span><span class="n">networkanalyzer</span>
+</pre></div>
+</div>
+<p>Software modules usually perform higher-level tasks than hardware modules. Moreover, accessing a hardware module without
+care could be harmful to some acquisition already running on the redpitaya. For this reason, it is advisable to access hardware modules
+via module managers only.</p>
+<section id="module-pyrpl.software_modules.module_managers">
+<span id="using-module-managers"></span><h3><span class="section-number">3.3.1. </span>Using Module Managers<a class="headerlink" href="#module-pyrpl.software_modules.module_managers" title="Link to this heading">¶</a></h3>
+<p>Module managers are lightweight software modules that manage the access to
+hardware modules. For example, to use the scope:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">HOSTNAME</span> <span class="o">=</span> <span class="s2">&quot;192.168.1.100&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyrpl</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pyrpl</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">Pyrpl</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="n">HOSTNAME</span><span class="p">)</span>
+
+<span class="c1"># directly accessing the scope will not *reserve* it</span>
+<span class="n">scope</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">rp</span><span class="o">.</span><span class="n">scope</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">scope</span><span class="o">.</span><span class="n">owner</span><span class="p">)</span>
+<span class="n">scope</span><span class="o">.</span><span class="n">duration</span> <span class="o">=</span> <span class="mf">1.</span>
+
+<span class="c1"># using the scope manager changes its ownership</span>
+<span class="k">with</span> <span class="n">p</span><span class="o">.</span><span class="n">scopes</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;username&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">scope</span><span class="p">:</span>
+   <span class="nb">print</span><span class="p">(</span><span class="n">scope</span><span class="o">.</span><span class="n">owner</span><span class="p">)</span>
+   <span class="n">scope</span><span class="o">.</span><span class="n">duration</span> <span class="o">=</span><span class="mf">0.01</span>
+   <span class="nb">print</span><span class="p">(</span><span class="n">scope</span><span class="o">.</span><span class="n">duration</span><span class="p">)</span>
+<span class="c1"># The scope is freed (and reset to its previous state) after the with</span>
+<span class="c1"># construct</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">scope</span><span class="o">.</span><span class="n">owner</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">scope</span><span class="o">.</span><span class="n">duration</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In case several identical modules are available on the FPGA, the first one (
+starting from the end of the list) is returned by the module manager:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">HOSTNAME</span> <span class="o">=</span> <span class="s2">&quot;192.168.1.100&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyrpl</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pyrpl</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">Pyrpl</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="n">HOSTNAME</span><span class="p">)</span>
+
+<span class="c1"># directly accessing the scope will not *reserve* it</span>
+<span class="n">pid2</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">rp</span><span class="o">.</span><span class="n">pid2</span>
+<span class="n">pid2</span><span class="o">.</span><span class="n">owner</span> <span class="o">=</span> <span class="s1">&#39;foo&#39;</span>
+
+<span class="c1"># Pid manager returns the first free pid module (in decreasing order)</span>
+<span class="k">with</span> <span class="n">p</span><span class="o">.</span><span class="n">pids</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;username&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">pid</span><span class="p">:</span>
+   <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;pid0&#39;s owner: &quot;</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">rp</span><span class="o">.</span><span class="n">pid0</span><span class="o">.</span><span class="n">owner</span><span class="p">)</span>
+   <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;pid1&#39;s owner: &quot;</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">rp</span><span class="o">.</span><span class="n">pid1</span><span class="o">.</span><span class="n">owner</span><span class="p">)</span>
+   <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;pid2&#39;s owner: &quot;</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">rp</span><span class="o">.</span><span class="n">pid2</span><span class="o">.</span><span class="n">owner</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;pid0&#39;s owner: &quot;</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">rp</span><span class="o">.</span><span class="n">pid0</span><span class="o">.</span><span class="n">owner</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;pid1&#39;s owner: &quot;</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">rp</span><span class="o">.</span><span class="n">pid1</span><span class="o">.</span><span class="n">owner</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;pid2&#39;s owner: &quot;</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">rp</span><span class="o">.</span><span class="n">pid2</span><span class="o">.</span><span class="n">owner</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="module-pyrpl.software_modules.spectrum_analyzer">
+<span id="spectrum-analyzer"></span><h3><span class="section-number">3.3.2. </span>Spectrum Analyzer<a class="headerlink" href="#module-pyrpl.software_modules.spectrum_analyzer" title="Link to this heading">¶</a></h3>
+<p>The spectrum analyzer measures the magnitude of an input signal versus
+frequency. There are two working modes for the spectrum analyzer implemented in
+pyrpl:</p>
+<ul class="simple">
+<li><p>iq mode: the input signal is demodulated around the center_frequency of
+the analysis window (using iq2). The slowly varying quadratures are
+subsequently sent to the 2 channels of the scope. The complex IQ time trace
+is built from the sum I(t) + iQ(t). The spectrum is then evaluated by
+performing a Fourier transforom of the the complex iq signal.</p></li>
+<li><p>baseband mode: up to 2 channels are available in baseband mode. The
+channels are digitized by the scope and the real traces are directly Fourier
+transformed. Since both channels are acquired simultaneously, it is also
+possible to retrieve the cross spectrum between channel 1 and channel 2 (the
+relative phase of the fourier transform coefficients is meaningful)</p></li>
+</ul>
+<p>At the moment, the iq mode is deactivated since we haven’t yet implemented
+the sharp antialiasing filters required to avoid polluting the analysis
+windows from aliased noise originating from outside the Nyquist frequency of
+the scope acquisition. However, we are planning on implementing such a
+filter with the iir module in the near future.</p>
+<p>In the following example, we are going to demonstrate how to measure a
+sinusoidal signal and a white noise originating from an asg</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># let&#39;s use a module manager for the asg</span>
+<span class="k">with</span> <span class="n">p</span><span class="o">.</span><span class="n">asgs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;user&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">asg</span><span class="p">:</span>
+    <span class="c1"># setup a sine at 100 kHz</span>
+    <span class="n">asg</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">frequency</span><span class="o">=</span><span class="mf">1e5</span><span class="p">,</span>
+              <span class="n">waveform</span><span class="o">=</span><span class="s1">&#39;sin&#39;</span><span class="p">,</span>
+              <span class="n">trigger_source</span><span class="o">=</span><span class="s1">&#39;immediately&#39;</span><span class="p">,</span>
+              <span class="n">amplitude</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span>
+              <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># setup the spectrumanalyzer in baseband mode</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">spectrumanalyzer</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">input1_baseband</span><span class="o">=</span><span class="n">asg</span><span class="p">,</span> <span class="c1">#note that input1_baseband!=input)</span>
+                             <span class="n">baseband</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="c1"># only mod eavailable right now</span>
+                             <span class="n">span</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span> <span class="c1"># span of the analysis (/2 in iq mode)</span>
+                             <span class="n">window</span><span class="o">=</span><span class="s1">&#39;blackman&#39;</span> <span class="c1"># filter window</span>
+                             <span class="p">)</span>
+
+    <span class="c1"># the return format is (spectrum for channel 1, spectrum for channel 2,</span>
+    <span class="c1"># real part of cross spectrum, imaginary part of cross spectrum):</span>
+    <span class="n">ch1</span><span class="p">,</span> <span class="n">ch2</span><span class="p">,</span> <span class="n">cross_re</span><span class="p">,</span> <span class="n">cross_im</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">spectrumanalyzer</span><span class="o">.</span><span class="n">single</span><span class="p">()</span>
+
+<span class="c1"># plot the spectrum</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">spectrumanalyzer</span><span class="o">.</span><span class="n">frequencies</span><span class="p">,</span> <span class="n">ch1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We notice that the spectrum is peaked around 100 kHz (The width of the peak
+is given by the residual bandwidth), and the height of the peak is 1.</p>
+<p>The internal unit of the spectrum analyzer is V_pk^2, such that a 1 V sine
+results in a 1 Vpk^2 peak in the spectrum. To convert the spectrum in units
+of noise spectral density, a utility function is provided: data_to_unit()</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># let&#39;s use a module manager for the asg</span>
+<span class="k">with</span> <span class="n">p</span><span class="o">.</span><span class="n">asgs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;user&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">asg</span><span class="p">:</span>
+    <span class="c1"># setup a white noise of variance 0.1 V</span>
+    <span class="n">asg</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">frequency</span><span class="o">=</span><span class="mf">1e5</span><span class="p">,</span>
+              <span class="n">waveform</span><span class="o">=</span><span class="s1">&#39;noise&#39;</span><span class="p">,</span>
+              <span class="n">trigger_source</span><span class="o">=</span><span class="s1">&#39;immediately&#39;</span><span class="p">,</span>
+              <span class="n">amplitude</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+              <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># setup the spectrumanalyzer in baseband mode and full span</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">spectrumanalyzer</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">input1_baseband</span><span class="o">=</span><span class="n">asg</span><span class="p">,</span> <span class="n">baseband</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">span</span><span class="o">=</span><span class="mf">125e6</span><span class="p">)</span>
+
+    <span class="c1"># the return format is (spectrum for channel 1, spectrum for channel 2,</span>
+    <span class="c1"># real part of cross spectrum, imaginary part of cross spectrum):</span>
+    <span class="n">ch1</span><span class="p">,</span> <span class="n">ch2</span><span class="p">,</span> <span class="n">cross_re</span><span class="p">,</span> <span class="n">cross_im</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">spectrumanalyzer</span><span class="o">.</span><span class="n">single</span><span class="p">()</span>
+
+<span class="c1"># convert to Vrms^2/Hz</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">spectrumanalyzer</span><span class="o">.</span><span class="n">data_to_unit</span><span class="p">(</span><span class="n">ch1</span><span class="p">,</span> <span class="s1">&#39;Vrms^2/Hz&#39;</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">spectrumanalyzer</span><span class="o">.</span><span class="n">rbw</span><span class="p">)</span>
+
+<span class="c1"># plot the spectrum</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">spectrumanalyzer</span><span class="o">.</span><span class="n">frequencies</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+<span class="c1"># integrate spectrum from 0 to nyquist frequency</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">spectrumanalyzer</span><span class="o">.</span><span class="n">frequencies</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">p</span><span class="o">.</span><span class="n">spectrumanalyzer</span><span class="o">.</span><span class="n">frequencies</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">*</span><span class="n">df</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>As expected, the integral of the noise spectrum over the whole frequency
+range gives the variance of the noise. To know more about spectrum analysis
+in Pyrpl, and in particular, how the filtering windows are normalized, please
+refer to the section <a class="reference internal" href="developer_guide/api/spectrum.html#how-a-spectrum-is-computed-in-pyrpl"><span class="std std-ref">How a spectrum is computed in PyRPL</span></a>.</p>
+</section>
+<section id="lockbox">
+<h3><span class="section-number">3.3.3. </span>Lockbox<a class="headerlink" href="#lockbox" title="Link to this heading">¶</a></h3>
+<p>Coming soon</p>
+</section>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="basics.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title"><span class="section-number">4. </span>Basics of the PyRPL Architecture</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="gui.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title"><span class="section-number">2. </span>GUI instruments manual</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2014-2025, Leonhard Neuhaus, Samuel Deléglise, Michaël Croquette 
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">3. API manual</a><ul>
+<li><a class="reference internal" href="#first-steps">3.1. 1 First steps</a><ul>
+<li><a class="reference internal" href="#connecting-to-the-redpitaya">3.1.1. Connecting to the RedPitaya</a></li>
+<li><a class="reference internal" href="#basic-communication-with-your-redpitaya">3.1.2. Basic communication with your RedPitaya</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#redpitaya-or-hardware-modules">3.2. 2 RedPitaya (or Hardware) modules</a><ul>
+<li><a class="reference internal" href="#asg-and-scope-module">3.2.1. ASG and Scope module</a></li>
+<li><a class="reference internal" href="#module-pyrpl.hardware_modules.asg">3.2.2. Arbitrary Signal Generator</a></li>
+<li><a class="reference internal" href="#module-pyrpl.hardware_modules.scope">3.2.3. Oscilloscope</a></li>
+<li><a class="reference internal" href="#module-pyrpl.hardware_modules.pid">3.2.4. PID module</a><ul>
+<li><a class="reference internal" href="#proportional-and-integral-gain">3.2.4.1. Proportional and integral gain</a></li>
+<li><a class="reference internal" href="#control-with-the-integral-value-register">3.2.4.2. Control with the integral value register</a></li>
+<li><a class="reference internal" href="#input-filters">3.2.4.3. Input filters</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-pyrpl.hardware_modules.iq">3.2.5. IQ module</a><ul>
+<li><a class="reference internal" href="#network-analyzer">3.2.5.1. Network analyzer</a></li>
+<li><a class="reference internal" href="#lorentzian-bandpass-filter">3.2.5.2. Lorentzian bandpass filter</a></li>
+<li><a class="reference internal" href="#frequency-comparator-module">3.2.5.3. Frequency comparator module</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-pyrpl.hardware_modules.iir">3.2.6. IIR module</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pyrpl-or-software-modules">3.3. 3 Pyrpl (or Software) modules</a><ul>
+<li><a class="reference internal" href="#module-pyrpl.software_modules.module_managers">3.3.1. Using Module Managers</a></li>
+<li><a class="reference internal" href="#module-pyrpl.software_modules.spectrum_analyzer">3.3.2. Spectrum Analyzer</a></li>
+<li><a class="reference internal" href="#lockbox">3.3.3. Lockbox</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=81b53a12"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    </body>
+</html>

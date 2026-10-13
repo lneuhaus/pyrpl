@@ -1,0 +1,704 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html"><link rel="next" title="5.6.4. MemoryTree" href="memory_tree.html"><link rel="prev" title="5.6.2. Asynchronous sleep function and benchmarks" href="asynchronous/benchmark.html">
+        <link rel="prefetch" href="../../_static/logo.png" as="image">
+
+    <link rel="shortcut icon" href="../../_static/icon.ico"><!-- Generated with Sphinx 7.4.7 and Furo 2025.12.19 -->
+        <title>5.6.3. How a spectrum is computed in PyRPL - pyrpl 0.9.9.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #eeffcc;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../index.html"><div class="brand">pyrpl 0.9.9.1 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../../_static/logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">pyrpl 0.9.9.1 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">1. Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gui.html">2. GUI instruments manual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">3. API manual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basics.html">4. Basics of the PyRPL Architecture</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="../index.html">5. Notes for developers</a><input aria-label="Toggle navigation of 5. Notes for developers" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html">5.1. Contributing to PyRPL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_compilation.html">5.2. Building the FPGA firmware</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../unittests.html">5.3. Unittests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../codingstyle.html">5.4. Coding style guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../codingworkflow.html">5.5. Workflow to submit code changes</a></li>
+<li class="toctree-l2 current has-children"><a class="reference internal" href="index.html">5.6. API specifications from the moment of their development</a><input aria-label="Toggle navigation of 5.6. API specifications from the moment of their development" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="asynchronous/index.html">5.6.1. Requirements for an asynchronous interface compatible with python 3 asyncio</a></li>
+<li class="toctree-l3"><a class="reference internal" href="asynchronous/benchmark.html">5.6.2. Asynchronous sleep function and benchmarks</a></li>
+<li class="toctree-l3 current current-page"><a class="current reference internal" href="#">5.6.3. How a spectrum is computed in PyRPL</a></li>
+<li class="toctree-l3"><a class="reference internal" href="memory_tree.html">5.6.4. MemoryTree</a></li>
+<li class="toctree-l3"><a class="reference internal" href="attribute_and_module.html">5.6.5. Base classes Attributes and Module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="select_property.html">5.6.6. Starting to rewrite SelectAttribute/Property</a></li>
+<li class="toctree-l3"><a class="reference internal" href="acquisition_module.html">5.6.7. AcquisitionModule</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lockbox.html">5.6.8. Lockbox</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_widget.html">5.6.9. DataWidget</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dist/index.html">5.7. Distribution of pyrpl</a><input aria-label="Toggle navigation of 5.7. Distribution of pyrpl" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../dist/autodoc.html">5.7.1. Building the documentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dist/executable.html">5.7.2. Building standalone applications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dist/release.html">5.7.3. Preparing a release</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../sdcard.html">5.8. SD card preparation</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../gallery/index.html">Gallery of PyRPL usage examples</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../user_guide/index.html">User’s guide to PyRPL</a><input aria-label="Toggle navigation of User’s guide to PyRPL" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../user_guide/installation/index.html">Installation</a><input aria-label="Toggle navigation of Installation" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide/installation/hardware_installation.html">Hardware installation for PyRPL</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide/installation/pyrpl_installation.html">Installing PyRPL</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide/installation/common_problems.html">Common installation problems</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide/installation/user_dir.html">Directory for user data “PYRPL_USER_DIR”</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/tutorial/index.html">Quickstart Tutorial for PyRPL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/basics/index.html">Basics of PyRPL</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference_guide/index.html">Reference guide to PyRPL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_feedback.html">Feedback by PyRPL users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../publications.html">Publications about PyRPL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../thanks.html">Contributors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../thanks.html#funding-and-support">Funding and support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../thanks.html#about">About</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../../_sources/developer_guide/api/spectrum.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="how-a-spectrum-is-computed-in-pyrpl">
+<span id="id1"></span><h1><span class="section-number">5.6.3. </span>How a spectrum is computed in PyRPL<a class="headerlink" href="#how-a-spectrum-is-computed-in-pyrpl" title="Link to this heading">¶</a></h1>
+<p>Inspiration comes from Oppenheim &amp; Schaefer 1975 and from
+<a class="reference external" href="http://cp.literature.agilent.com/litweb/pdf/5952-0292.pdf">Agilent</a></p>
+<p>The spectrum analyzer in Pyrpl estimates the spectrum of internal or
+external signals by performing Fast-Fourier Transforms of traces
+recorded by the scope. Since in the current version of Pyrpl, the stream
+of data from the scope is made of discontiguous segments of 2^14
+samples, we are currently using the
+<a class="reference external" href="https://en.wikipedia.org/wiki/Bartlett%27s_method">Bartlett</a> method,
+which consists in the following steps:</p>
+<ol class="arabic simple">
+<li><p>Each segment is multiplied by a symmetric window function of the same
+size.</p></li>
+<li><p>The DFT of individual segments is performed. The segment is padded
+before the FFT by a number of 0s to provide more points in the estimated
+spectrum than in the original time segment.</p></li>
+<li><p>The square modulus of the resulting periodograms are averaged to give
+the estimate of the spectrum, with the same size as the initial
+time-segments.</p></li>
+</ol>
+<p>A variant of this method is the
+<a class="reference external" href="https://en.wikipedia.org/wiki/Welch%27s_method">Welch</a> method, in
+which the segments are allowed to be overlapping with each other. The
+advantage is that when a narrow windowing function (ie a large number of
+“points-per-bandwidth” in the frequency domain) is used, the points far
+from the center of the time-segments have basically no weight in the
+result. With overlapping segments, it is basically possible to move the
+meaningful part of the window over all the available data. This is the
+basic principle of real-time spectrum analyzers. This cannot be
+implemented “as is” since the longest adjacent time-traces at our
+disposal is 2^14 sample long.</p>
+<p>However, a possible improvement, which would not require any changes of
+the underlying FPGA code would be to apply the welch method with
+subsegments smaller than the initial scope traces: for instance we would
+extract 2^13 points subsegments, and we could shift the subsegment by up
+to 2^13 points. With such a method, even with an infinitely narrow
+windowing function, we would only “loose” half of the acquired data.
+This could be immediately implemented with the Welch method implemented
+in
+<a class="reference external" href="https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.signal.welch.html">scipy</a>.</p>
+<p>In the following, we discuss the normalization of windowing functions,
+and then, the basic principle of operation of the two modes “iq” and
+“baseband”.</p>
+<section id="definitions">
+<h2><span class="section-number">5.6.3.1. </span>Definitions<a class="headerlink" href="#definitions" title="Link to this heading">¶</a></h2>
+<div class="table-wrapper docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>name</p></th>
+<th class="head"><p>definition</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Original time series</p></td>
+<td><p>x[k], 0&lt;=k&lt;N</p></td>
+</tr>
+<tr class="row-odd"><td><p>Fourier Transform</p></td>
+<td><p>X[r] = sum_k x[k] exp(-2 i pi r k/N)</p></td>
+</tr>
+<tr class="row-even"><td><p>Inverse Fourier Transform (equivalently)</p></td>
+<td><p>x[k] = 1/N sum_r X[r] exp(2 i pi k r/N)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Time window</p></td>
+<td><p>w[k]</p></td>
+</tr>
+<tr class="row-even"><td><p>Fourier transformed time window</p></td>
+<td><p>W[r]</p></td>
+</tr>
+<tr class="row-odd"><td><p>Singly averaged spectrum (in V_pk)</p></td>
+<td><p>Y[r]=sum_k x[k] w[k] exp(-2 i pi r k/N)</p></td>
+</tr>
+<tr class="row-even"><td><p>Singly averaged spectrum (in Vrms^2/Hz)</p></td>
+<td><p>Z(r) = |Y(r)|^2/ (2 rbw)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>We can show that the Fourier transform of the product is the convolution of the Fourier
+Transforms, such that:</p>
+<p>Y[r] = 1/N sum_r’ X[r’] W[r-r’]     (1)</p>
+<p>To make sure the windowing function is well normalized, and to define
+the noise equivalent bandwidth of a given windowing function,
+we will study the 2 limiting cases where the initial time series is either
+a sinusoid or a gaussian distributed white noise.</p>
+</section>
+<section id="sinusoidal-input">
+<h2><span class="section-number">5.6.3.2. </span>Sinusoidal input<a class="headerlink" href="#sinusoidal-input" title="Link to this heading">¶</a></h2>
+<p>To simplify the calculations, we assume the period of the sinusoid is a multiple
+of the sampling rate:</p>
+<p>x[k] = cos[2 pi m k/N]</p>
+<p>= 1/2 (exp[i 2 pi m k/N] + exp[-2 pi i (N - m) k/N])</p>
+<p>We obtain the Fourier transform:</p>
+<p>X[r] = N/2 (delta[r-m] + delta[r-(N-m)]).</p>
+<p>We deduce using (1), that the estimated spectrum is:</p>
+<p>Y[r] = 1/2 (W[r - m] + W[r - (N-m)])</p>
+<p>With the discrete fourier transform convention used here, we need to pay attention that
+the DC-component is for r=0, and the �negative frequencies� are actually located in the second
+half of the interval [N/2, N]. If we take the single sided convention where the negative frequency
+side is simply ignored, the correct normalization in terms of V_pk (for which the maximum of the
+spectrum corresponds to the amplitude of the sinusoid) is the one for where max(W[r]) = 2.</p>
+<p>Moreover, a reasonable windowing function will only have non-zero Fourier components on the few bins
+around DC, such that if we measure a pure sinusoid with a frequency far from 0, there wont be any significant
+overlap between the two terms, and we will measure 2 distinct peaks in the positive and negative
+frequency regions, each of them with the shape of the Fourier transform of the windowing function.
+Since the maximum of W[r] is located in r=0, we finally have:</p>
+<p>sum_k w[k] = 2</p>
+</section>
+<section id="white-noise-input">
+<h2><span class="section-number">5.6.3.3. </span>White noise input<a class="headerlink" href="#white-noise-input" title="Link to this heading">¶</a></h2>
+<p>Once the normalization of the filter window has been imposed by the previous condition,
+we need to define the bandwidth of the window such that noise measurements integrated
+over frequency give the right variances.</p>
+<p>Let’s take a white noise of variance 1.</p>
+<p><code class="docutils literal notranslate"><span class="pre">&lt;x[k]</span> <span class="pre">x[k']&gt;</span> <span class="pre">=</span> <span class="pre">delta(k-k')</span></code></p>
+<p>We would like the total spectrum in units of Vrms^2/Hz, integrated from 0 to Nyquist frequency
+to yield the same variance of 1. This is ensured by the Equivalent noise bandwidth of the filter window.
+To convert from V_pk^2 to V_rms^2/Hz, the spectrum is divided by the residual bandwidth of the filter window.</p>
+<p>Let’s calculate:</p>
+<p><code class="docutils literal notranslate"><span class="pre">sum_r</span> <span class="pre">&lt;|Y[r]|^2&gt;</span> <span class="pre">=</span> <span class="pre">(...)</span> <span class="pre">=</span> <span class="pre">N</span> <span class="pre">sum_k</span> <span class="pre">w[k]^2</span> <span class="pre">&lt;|x[k]|^2&gt;</span></code></p>
+<p>If we remind that x[k] is a white noise following <code class="docutils literal notranslate"><span class="pre">&lt;|x[k]|^2&gt;</span> <span class="pre">=</span> <span class="pre">1</span></code>, we get:</p>
+<p><code class="docutils literal notranslate"><span class="pre">sum_r</span> <span class="pre">&lt;|Y[r]|^2&gt;</span> <span class="pre">=</span> <span class="pre">N</span> <span class="pre">sum_k</span> <span class="pre">w[k]^2</span></code></p>
+<p>So, since we want:</p>
+<p><code class="docutils literal notranslate"><span class="pre">sum_r</span> <span class="pre">&lt;|Z[r]|^2&gt;</span> <span class="pre">df</span> <span class="pre">=</span> <span class="pre">2</span></code> (indeed, we want to work with single-sided spectra, such that integrating over positive frequencies is enough)</p>
+<p>with df the frequency step in the FFT, we need to choose:</p>
+<p>rbw = N sum_k w[k]^2 df /4</p>
+<p>In order to use dimensionless parameters for the filter windows, we can introduce the equivalent noise bandwidth:</p>
+<p>ENBW = sum_k w[k]^2/(sum_k w[k])^2 = 1/4 sum_k w[k]^2</p>
+<p>Finally, we get the expression of the rbw:</p>
+<p>rbw = sample_rate ENBW</p>
+</section>
+<section id="iq-mode">
+<h2><span class="section-number">5.6.3.4. </span>IQ mode<a class="headerlink" href="#iq-mode" title="Link to this heading">¶</a></h2>
+<p>In iq mode, the signal to measure is fed inside an iq module, and thus,
+multiplied by two sinusoids in quadrature with each other, and at the
+frequency <code class="docutils literal notranslate"><span class="pre">center_freq</span></code>. The resulting I and Q signals are then
+filtered by 4 first order filters in series with each other, with cutoff
+frequencies given by <code class="docutils literal notranslate"><span class="pre">span</span></code>. Finally, these signals are measured
+simultaneously with the 2 channels of the scope, and we form the complex
+time serie c_n = I_n + i Q_n. The procedure described above is
+applied to extract the periodogram from the complex time-serie.</p>
+<p>Since the data are complex, there are as many independent values in the
+FFT than in the initial data (in other words, negative frequencies are
+not redundant with positive frequency). In fact, the result is an
+estimation of the spectrum in the interval [center_freq - span/2,
+center_freq + span/2].</p>
+</section>
+<section id="baseband">
+<h2><span class="section-number">5.6.3.5. </span>Baseband<a class="headerlink" href="#baseband" title="Link to this heading">¶</a></h2>
+<p>In baseband mode, the signal to measure is directly fed to the scope and
+the procedure described above is applied directly. There are 2
+consequences of the fact that the data are real:</p>
+<ol class="arabic simple">
+<li><p>The negative frequency components are complex conjugated (and thus
+redundant) wrt the positive ones. We thus throw away the negative
+frequencies, and only get a measurement on the interval [0, span/2]</p></li>
+<li><p>The second scope channel can be used to measure another signal.</p></li>
+</ol>
+<p>It is very interesting to measure simultaneously 2 signals, because we
+can look for correlations between them. In the frequency domains, these
+correlations are most easily represented by the cross-spectrum. We
+estimate the cross-spectrum by performing the product
+<code class="docutils literal notranslate"><span class="pre">conjugate(fft1)*fft2</span></code>, where <code class="docutils literal notranslate"><span class="pre">fft1</span></code> and <code class="docutils literal notranslate"><span class="pre">fft2</span></code> are the DFTs of
+the individual scope channels before taking their modulus square.</p>
+<p>Hence, in baseband mode, the method <code class="docutils literal notranslate"><span class="pre">single()</span></code> returns a 4x2^13 array
+with the following content: - spectrum1 - spectrum2 - real part of cross
+spectrum - imaginary part of cross spectrum</p>
+</section>
+<section id="proposal-for-a-cleaner-interface-for-spectrum-analyzer">
+<h2><span class="section-number">5.6.3.6. </span>Proposal for a cleaner interface for spectrum analyzer:<a class="headerlink" href="#proposal-for-a-cleaner-interface-for-spectrum-analyzer" title="Link to this heading">¶</a></h2>
+<p>To avoid baseband/2-channels acquisition from becoming a big mess, I
+suggest the following:</p>
+<ul class="simple">
+<li><p>The return type of the method <code class="docutils literal notranslate"><span class="pre">curve</span></code> should depend as little as
+possible from the particular settings of the instrument
+(<code class="docutils literal notranslate"><span class="pre">channel2_baseband_active</span></code>, <code class="docutils literal notranslate"><span class="pre">display_units</span></code>). That was the idea
+with scope, and I think that makes things much cleaner.
+Unfortunately, for <code class="docutils literal notranslate"><span class="pre">baseband</span></code>, making 2 parallel piplines such as
+<code class="docutils literal notranslate"><span class="pre">curve_iq</span></code>, <code class="docutils literal notranslate"><span class="pre">curve_baseband</span></code> is not so trivial, because
+<code class="docutils literal notranslate"><span class="pre">single()</span></code> is already part of the <code class="docutils literal notranslate"><span class="pre">AcquisitionModule</span></code>. So I think
+we will have to live with the fact that <code class="docutils literal notranslate"><span class="pre">single()</span></code> returns 2
+different kinds of data in <code class="docutils literal notranslate"><span class="pre">baseband</span></code> and <code class="docutils literal notranslate"><span class="pre">iq-mode</span></code>.</p></li>
+<li><p>Moreover, in baseband, we clearly want both individual spectra +
+cross-spectrum to be calculated from the beginning, since once the
+<code class="docutils literal notranslate"><span class="pre">abs()</span></code> of the <code class="docutils literal notranslate"><span class="pre">ffts</span></code> is taken, it is already too late to compute
+<code class="docutils literal notranslate"><span class="pre">conjugate(fft1)*fft2</span></code></p></li>
+<li><p>Finally, I suggest to return all spectra with only one “internal
+unit” which would be <code class="docutils literal notranslate"><span class="pre">V_pk^2</span></code>: indeed, contrary to rms-values
+unittesting doesn’t require any conversion with peak values,
+moreover, averaging is straightforward with a quadratic unit,
+finally, <code class="docutils literal notranslate"><span class="pre">.../Hz</span></code> requires a conversion-factor involving the
+bandwidth for unittesting with coherent signals</p></li>
+</ul>
+<p>I suggest the following return values for <code class="docutils literal notranslate"><span class="pre">single()</span></code>:</p>
+<ul class="simple">
+<li><p>In normal (iq-mode): <code class="docutils literal notranslate"><span class="pre">single()</span></code> returns a real valued 1D-array with
+the normal spectrum in <code class="docutils literal notranslate"><span class="pre">V_pk^2</span></code></p></li>
+<li><p>In baseband: <code class="docutils literal notranslate"><span class="pre">single()</span></code> returns a 4xN/2-real valued array with
+<code class="docutils literal notranslate"><span class="pre">(spectrum1,</span> <span class="pre">spectrum2,</span> <span class="pre">cross_spectrum_real,</span> <span class="pre">cross_spectrum_imag)</span></code>.
+Otherwise, manipulating a complex array for the 2 real spectra is
+painful and inefficient.</p></li>
+</ul>
+<p>Leo: Seems okay to me. One can always add functions like spectrum1() or
+cross_spectrum_complex() which will take at most two lines. Same for
+the units, I won’t insist on rms, its just a matter of multiplying
+sqrt(1/2). However, I suggest that we then have 3-4 buttons in the gui
+to select which spectra and cross-spectra are displayed.</p>
+<p>Yes, I am actually working on the gui right now: There will be a
+baseband-area, where one can choose <code class="docutils literal notranslate"><span class="pre">display_input1_baseband</span></code>,
+<code class="docutils literal notranslate"><span class="pre">input1_baseband</span></code>, <code class="docutils literal notranslate"><span class="pre">display_input2_baseband</span></code>, <code class="docutils literal notranslate"><span class="pre">input2_baseband</span></code>,
+<code class="docutils literal notranslate"><span class="pre">display_cross_spectrum</span></code>, ‘display_cross_spectrum_phase’. And a
+“iq-area” where one can choose <code class="docutils literal notranslate"><span class="pre">center_frequency</span></code> and <code class="docutils literal notranslate"><span class="pre">input</span></code>. I
+guess this is no problem if we have the 3 distinct attributes <code class="docutils literal notranslate"><span class="pre">input</span></code>,
+<code class="docutils literal notranslate"><span class="pre">input1_baseband</span></code> and <code class="docutils literal notranslate"><span class="pre">input2_baseband</span></code>, it makes thing more
+symmetric…</p>
+</section>
+<section id="iq-mode-with-proper-anti-aliasing-filter">
+<h2><span class="section-number">5.6.3.7. </span>IQ mode with proper anti-aliasing filter<a class="headerlink" href="#iq-mode-with-proper-anti-aliasing-filter" title="Link to this heading">¶</a></h2>
+<p>When the IQ mode is used, a part of the broadband spectrum of the two
+quadratures is to be sampled at a significantly reduced sampling rate in
+order to increase the number of points in the spectrum, and thereby
+resolution bandwidth. Aliasing occurs if significant signals above the
+scope sampling rate are thereby under-sampled by the scope, and results
+in ghost peaks in the spectrum. The ordinary way to get rid of this
+effect is to use excessive digital low-pass filtering with cutoff
+frequencies slightly below the scope sampling rate, such that any peaks
+outside the band of interest will be rounded off to zero. The following
+code implements the design of such a low-pass filter (we choose an
+elliptical filter for maximum steepness):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">signal</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="c1"># the overall decimation value</span>
+<span class="n">decimation</span> <span class="o">=</span> <span class="mi">8</span>
+
+<span class="c1"># elliptical filter runs at ell_factor times the decimated scope sampling rate</span>
+<span class="n">ell_factor</span> <span class="o">=</span> <span class="mi">4</span>
+
+<span class="n">wp</span> <span class="o">=</span> <span class="mf">0.8</span><span class="o">/</span><span class="n">ell_factor</span> <span class="c1"># passband ends at xx% of nyquist frequency</span>
+<span class="n">ws</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">ell_factor</span> <span class="c1"># stopband starts at yy% of nyquist frequency</span>
+<span class="n">gpass</span> <span class="o">=</span> <span class="mf">5.</span> <span class="c1"># jitter in passband (dB)</span>
+<span class="n">gstop</span> <span class="o">=</span> <span class="mf">20.</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">14</span><span class="p">)</span>  <span class="c1"># attenuation in stopband (dB)</span>
+<span class="c1">#gstop = 60  #60 dB attenuation would only require a 6th order filter</span>
+<span class="n">N</span><span class="p">,</span> <span class="n">Wn</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">ellipord</span><span class="p">(</span><span class="n">wp</span><span class="o">=</span><span class="n">wp</span><span class="p">,</span> <span class="n">ws</span><span class="o">=</span><span class="n">ws</span><span class="p">,</span> <span class="n">gpass</span><span class="o">=</span><span class="n">gpass</span><span class="p">,</span> <span class="n">gstop</span><span class="o">=</span><span class="n">gstop</span><span class="p">,</span> <span class="n">analog</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># get filter order</span>
+<span class="n">z</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">k</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">ellip</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">gpass</span><span class="p">,</span> <span class="n">gstop</span><span class="p">,</span> <span class="n">Wn</span><span class="p">,</span> <span class="s1">&#39;low&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s1">&#39;zpk&#39;</span><span class="p">)</span>  <span class="c1"># get coefficients for implementation</span>
+<span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">ellip</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">gpass</span><span class="p">,</span> <span class="n">gstop</span><span class="p">,</span> <span class="n">Wn</span><span class="p">,</span> <span class="s1">&#39;low&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s1">&#39;ba&#39;</span><span class="p">)</span>  <span class="c1"># get coefficients for plotting</span>
+<span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">freqz</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">worN</span><span class="o">=</span><span class="mi">2</span><span class="o">**</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ww</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">62.5</span>  <span class="c1"># scale factor for frequency axis (original frequency axis goes up to 2 pi)</span>
+
+<span class="c1"># extent w to see what happens at higher frequencies</span>
+<span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">decimation</span><span class="o">/</span><span class="n">ell_factor</span><span class="o">*</span><span class="mi">2</span><span class="o">**</span><span class="mi">16</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="c1"># fold the response of the elliptical filter</span>
+<span class="n">hext</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">decimation</span><span class="o">/</span><span class="n">ell_factor</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">i</span><span class="o">%</span><span class="mi">2</span> <span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+        <span class="n">hext</span> <span class="o">+=</span> <span class="nb">list</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">hext</span> <span class="o">+=</span> <span class="nb">reversed</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">h</span><span class="p">))</span>
+<span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">hext</span><span class="p">)</span>
+<span class="c1"># elliptical filter</span>
+<span class="n">h_abs</span> <span class="o">=</span> <span class="mi">20</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">h</span><span class="p">))</span>
+
+<span class="c1"># 4th order lowpass filter after IQ block with cutoff of decimated scope sampling rate</span>
+<span class="n">cutoff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="n">decimation</span>
+<span class="n">butter</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="p">(</span><span class="mf">1.</span><span class="o">+</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">w</span><span class="o">/</span><span class="n">cutoff</span><span class="p">)</span><span class="o">**</span><span class="mi">4</span>
+<span class="n">butter_abs</span> <span class="o">=</span> <span class="mi">20</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">butter</span><span class="p">))</span>
+
+<span class="c1"># moving average decimation filter</span>
+<span class="n">M</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">decimation</span><span class="p">)</span> <span class="c1"># moving average filter length</span>
+<span class="n">mavg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">w</span><span class="o">*</span><span class="nb">float</span><span class="p">(</span><span class="n">M</span><span class="p">)</span><span class="o">/</span><span class="mf">2.0</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="n">w</span><span class="o">/</span><span class="mf">2.0</span><span class="p">)</span><span class="o">*</span><span class="nb">float</span><span class="p">(</span><span class="n">M</span><span class="p">))</span>
+<span class="n">mavg_abs</span> <span class="o">=</span> <span class="mi">20</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">mavg</span><span class="p">))</span>
+
+<span class="c1"># plot everything together and individual parts</span>
+<span class="n">h_tot</span> <span class="o">=</span> <span class="n">h_abs</span> <span class="o">+</span> <span class="n">mavg_abs</span> <span class="o">+</span> <span class="n">butter_abs</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">w</span><span class="o">/</span><span class="n">ww</span><span class="p">,</span> <span class="n">h_tot</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;all&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">w</span><span class="o">/</span><span class="n">ww</span><span class="p">,</span> <span class="n">h_abs</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;elliptic filter&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">w</span><span class="o">/</span><span class="n">ww</span><span class="p">,</span> <span class="n">butter_abs</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;butterworth filter&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">w</span><span class="o">/</span><span class="n">ww</span><span class="p">,</span> <span class="n">mavg_abs</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;moving average filter&quot;</span><span class="p">)</span>
+
+
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Elliptical lowpass filter of order </span><span class="si">%d</span><span class="s1">, decimation </span><span class="si">%d</span><span class="s1">, ell_factor </span><span class="si">%d</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">decimation</span><span class="p">,</span> <span class="n">ell_factor</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Frequency (MHz)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Amplitude (dB)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">which</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">fill</span><span class="p">([</span><span class="n">ws</span><span class="o">/</span><span class="n">ww</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="n">decimation</span><span class="o">*</span><span class="n">ell_factor</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">w</span><span class="o">/</span><span class="n">ww</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">w</span><span class="o">/</span><span class="n">ww</span><span class="p">),</span> <span class="n">ws</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="n">ww</span><span class="o">/</span><span class="n">decimation</span><span class="o">*</span><span class="n">ell_factor</span><span class="p">],</span> <span class="p">[</span><span class="nb">max</span><span class="p">(</span><span class="n">h_abs</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">h_abs</span><span class="p">),</span> <span class="o">-</span><span class="n">gstop</span><span class="p">,</span> <span class="o">-</span><span class="n">gstop</span><span class="p">],</span> <span class="s1">&#39;0.9&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="c1"># stop</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">fill</span><span class="p">([</span><span class="n">wp</span><span class="o">/</span><span class="n">ww</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="n">decimation</span><span class="o">*</span><span class="n">ell_factor</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">w</span><span class="o">/</span><span class="n">ww</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="n">w</span><span class="o">/</span><span class="n">ww</span><span class="p">),</span> <span class="n">wp</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="n">ww</span><span class="o">/</span><span class="n">decimation</span><span class="o">*</span><span class="n">ell_factor</span><span class="p">],</span> <span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">h_abs</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="n">h_abs</span><span class="p">),</span> <span class="o">-</span><span class="n">gpass</span><span class="p">,</span> <span class="o">-</span><span class="n">gpass</span><span class="p">],</span> <span class="s1">&#39;0.9&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="c1"># stop</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">([</span><span class="nb">min</span><span class="p">(</span><span class="n">w</span><span class="o">/</span><span class="n">ww</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">w</span><span class="o">/</span><span class="n">ww</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="n">h_abs</span><span class="p">)</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">h_abs</span><span class="p">)</span><span class="o">+</span><span class="mi">5</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;c://pyrpl-fpga//github//pyrpl//doc//specan_filter.png&#39;</span><span class="p">,</span><span class="n">DPI</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Final biquad coefficients [b0, b1, b2, a0, a1, a2]:&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">biquad</span> <span class="ow">in</span> <span class="n">signal</span><span class="o">.</span><span class="n">zpk2sos</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">biquad</span><span class="p">)</span>
+</pre></div>
+</div>
+<figure class="align-default" id="id2">
+<img alt="Resulting filter" src="https://github.com/pyrpl-fpga/pyrpl/blob/master/doc/specan_filter.png" />
+<figcaption>
+<p><span class="caption-text">Resulting filter</span><a class="headerlink" href="#id2" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>We see that a filter of 8th order, consisting of 4 sequential biquads is
+required. Since we do not require the span / sampling rate of the
+spectrum analyzer to be above roughly 5 MHz, we may implement the four
+biquads sequentially. Furthermore, for even lower values of the span,
+the filter can be fed with a reduced clock rate equal to the scope
+decimation factor divided by the variable ‘decimation’ in the filter
+design code above (4 in the example). For the aliasing of the lowpass
+filter passband not to cause problems in this case, we must in addition
+use the 4th order butterworth lowpass already available from the IQ
+module and the moving average filter of the scope. Then, as the plot
+shows, we can be sure that no aliasing occurs, given that no aliasing
+from the ADCs is present (should be guaranteed by analog Red Pitaya
+design).</p>
+<p>The problem with our scheme is the complexity of introducing 2 (for the
+two quadratures) 4-fold biquads. This will not fit into the current
+design and must therefore be postponed to after the FPGA cleanup.</p>
+<p>We could however opt for another temporary option, applicable only to
+stationary signals: Measure the spectrum twice or thrice with slightly
+shifted IQ demodulation frequency (at +- 10% of span and the actual
+center, as required above), and only plot the pointwise-minimum (with
+respect to the final frequency axis) of the obtained traces. This is
+simple and should be very effective (also to reduce the central peak at
+the demodulation freuqency), so i suggest we give it a try. Furthermore,
+it prepares the user that IQ spectra will only have 80% of the points in
+baseband mode, which will remain so after the implementation of the
+lowpass filter. The plot above shows that we do not have to worry about
+aliasing from multiple spans away if the bandwidth if the IQ module is
+se to the scope sampling rate (or slightly below). I am not aware that
+this method is used anywhere else, but do not see any serious problem
+with it.</p>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="memory_tree.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title"><span class="section-number">5.6.4. </span>MemoryTree</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="asynchronous/benchmark.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title"><span class="section-number">5.6.2. </span>Asynchronous sleep function and benchmarks</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2014-2025, Leonhard Neuhaus, Samuel Deléglise, Michaël Croquette 
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">5.6.3. How a spectrum is computed in PyRPL</a><ul>
+<li><a class="reference internal" href="#definitions">5.6.3.1. Definitions</a></li>
+<li><a class="reference internal" href="#sinusoidal-input">5.6.3.2. Sinusoidal input</a></li>
+<li><a class="reference internal" href="#white-noise-input">5.6.3.3. White noise input</a></li>
+<li><a class="reference internal" href="#iq-mode">5.6.3.4. IQ mode</a></li>
+<li><a class="reference internal" href="#baseband">5.6.3.5. Baseband</a></li>
+<li><a class="reference internal" href="#proposal-for-a-cleaner-interface-for-spectrum-analyzer">5.6.3.6. Proposal for a cleaner interface for spectrum analyzer:</a></li>
+<li><a class="reference internal" href="#iq-mode-with-proper-anti-aliasing-filter">5.6.3.7. IQ mode with proper anti-aliasing filter</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../../_static/documentation_options.js?v=81b53a12"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

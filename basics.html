@@ -1,0 +1,772 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="5. Notes for developers" href="developer_guide/index.html"><link rel="prev" title="3. API manual" href="api.html">
+        <link rel="prefetch" href="_static/logo.png" as="image">
+
+    <link rel="shortcut icon" href="_static/icon.ico"><!-- Generated with Sphinx 7.4.7 and Furo 2025.12.19 -->
+        <title>4. Basics of the PyRPL Architecture - pyrpl 0.9.9.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=fd3f3429" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #eeffcc;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">pyrpl 0.9.9.1 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="_static/logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">pyrpl 0.9.9.1 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">1. Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gui.html">2. GUI instruments manual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">3. API manual</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">4. Basics of the PyRPL Architecture</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="developer_guide/index.html">5. Notes for developers</a><input aria-label="Toggle navigation of 5. Notes for developers" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/contributing.html">5.1. Contributing to PyRPL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/fpga_compilation.html">5.2. Building the FPGA firmware</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/unittests.html">5.3. Unittests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/codingstyle.html">5.4. Coding style guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/codingworkflow.html">5.5. Workflow to submit code changes</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="developer_guide/api/index.html">5.6. API specifications from the moment of their development</a><input aria-label="Toggle navigation of 5.6. API specifications from the moment of their development" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/api/asynchronous/index.html">5.6.1. Requirements for an asynchronous interface compatible with python 3 asyncio</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/api/asynchronous/benchmark.html">5.6.2. Asynchronous sleep function and benchmarks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/api/spectrum.html">5.6.3. How a spectrum is computed in PyRPL</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/api/memory_tree.html">5.6.4. MemoryTree</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/api/attribute_and_module.html">5.6.5. Base classes Attributes and Module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/api/select_property.html">5.6.6. Starting to rewrite SelectAttribute/Property</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/api/acquisition_module.html">5.6.7. AcquisitionModule</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/api/lockbox.html">5.6.8. Lockbox</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/api/data_widget.html">5.6.9. DataWidget</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="developer_guide/dist/index.html">5.7. Distribution of pyrpl</a><input aria-label="Toggle navigation of 5.7. Distribution of pyrpl" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/dist/autodoc.html">5.7.1. Building the documentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/dist/executable.html">5.7.2. Building standalone applications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developer_guide/dist/release.html">5.7.3. Preparing a release</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide/sdcard.html">5.8. SD card preparation</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="gallery/index.html">Gallery of PyRPL usage examples</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="user_guide/index.html">User’s guide to PyRPL</a><input aria-label="Toggle navigation of User’s guide to PyRPL" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="user_guide/installation/index.html">Installation</a><input aria-label="Toggle navigation of Installation" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation/hardware_installation.html">Hardware installation for PyRPL</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation/pyrpl_installation.html">Installing PyRPL</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation/common_problems.html">Common installation problems</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide/installation/user_dir.html">Directory for user data “PYRPL_USER_DIR”</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/tutorial/index.html">Quickstart Tutorial for PyRPL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/basics/index.html">Basics of PyRPL</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference_guide/index.html">Reference guide to PyRPL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_feedback.html">Feedback by PyRPL users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="publications.html">Publications about PyRPL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="thanks.html">Contributors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="thanks.html#funding-and-support">Funding and support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="thanks.html#about">About</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="_sources/basics.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="basics-of-the-pyrpl-architecture">
+<h1><span class="section-number">4. </span>Basics of the PyRPL Architecture<a class="headerlink" href="#basics-of-the-pyrpl-architecture" title="Link to this heading">¶</a></h1>
+<p>This section presents the basic architecture of PyRPL. The main goal here is to quickly give a broad overview of PyRPL’s internal logic
+without distracting the reader with too many technical details. For a more detailed description of the individual components described in this page, please, refer
+to the corresponding section <a class="reference internal" href="developer_guide/index.html"><span class="doc">Notes for developers</span></a>.</p>
+<section id="motivation">
+<h2><span class="section-number">4.1. </span>Motivation<a class="headerlink" href="#motivation" title="Link to this heading">¶</a></h2>
+<p>Available hardware boards featuring FPGAs, CPUs and analog in- and outputs makes it possible to use digital signal processing (DSP)
+to control quantum optics experiments. Running open-source software on this hardware has many advantages:</p>
+<ul class="simple">
+<li><p>Lab space: small size, less different devices</p></li>
+<li><p>Money: cheap hardware, free software</p></li>
+<li><p>Time: connect cables once, re-wire digitally automate experiments work from home</p></li>
+<li><p>Automated measurements incite to take more data-points perform experiments more reproducibly
+record additional, auxiliary data</p></li>
+<li><p>Functionality beyond analog electronics</p></li>
+<li><p>Modify or customize instrument functionality</p></li>
+</ul>
+<p>However, learning all the subtleties of FPGA programming, compiling and debugging FPGA code can be extremely time consuming.
+Hence, PyRPL aims at providing a large panel of functionalities on a precompiled FPGA bitfile. These FPGA modules are highly customizable by changing
+register values without the need to recompile the FPGA code written in Hardware Description Language. High-level functionalities are implemented by a python
+package running remotely and controlling the FPGA registers.</p>
+</section>
+<section id="hardware-platform-red-pitaya">
+<h2><span class="section-number">4.2. </span>Hardware Platform - Red Pitaya<a class="headerlink" href="#hardware-platform-red-pitaya" title="Link to this heading">¶</a></h2>
+<p>At the moment, Red Pitaya is the only hardware platform supported by PyRPL.</p>
+<a class="reference internal image-reference" href="_images/redpitaya.jpg"><img alt="The redpitaya board" class="align-center" src="_images/redpitaya.jpg" style="width: 581.0px; height: 381.0px;" />
+</a>
+<p>The RedPitaya board is an affordable FPGA + CPU board running a Linux operating system. The FPGA is running at a clock rate of 125 MSps and
+it is interfaced with 2 analog inputs and 2 analog outputs (14 bits, 125 MSps). The minimum input-output latency is of the order of 200 ns and
+the effective resolution is 12 bits for inputs and 13 bits for outputs. 4 slow analog inputs and outputs and 16 I/O ports are also available.
+Visit the The Red Pitaya homepage (<a class="reference external" href="http://www.redpitaya.com">http://www.redpitaya.com</a>) for more details on the platform.</p>
+</section>
+<section id="software-infrastructure">
+<h2><span class="section-number">4.3. </span>Software Infrastructure<a class="headerlink" href="#software-infrastructure" title="Link to this heading">¶</a></h2>
+<p>The FPGA functionalities of PyRPL are organized in various DSP modules. These modules can be configured and arbitrarily connected together
+using a python package running on a client computer. This design offers a lot of flexibility in the design and control of various experimental
+setups without having to recompile the FPGA code each time a different fonctionality is needed. A fast ethernet interface maps all FPGA registers
+to Python variables. The read/write time is around 250 microseconds for a typical LAN connection. High-level functionalities are achieved by
+performing successive operations on the FPGA registers using the Python API. A Graphical User Interface is also provided to easily visualize and
+modify the different FPGA registers. We provide a description of the different software components below.</p>
+<a class="reference internal image-reference" href="_images/software_architecture.jpg"><img alt="PyRPL software architecture" class="align-center" src="_images/software_architecture.jpg" style="width: 1002.0px; height: 273.0px;" />
+</a>
+<section id="fpga-modules">
+<h3><span class="section-number">4.3.1. </span>FPGA modules<a class="headerlink" href="#fpga-modules" title="Link to this heading">¶</a></h3>
+<p>At the moment, the FPGA code provided with PyRPL implements various Digital Signal Processing modules:</p>
+<div class="table-wrapper docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Module name</p></th>
+<th class="head"><p># available</p></th>
+<th class="head"><p>Short description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Scope</p></td>
+<td><p>1</p></td>
+<td><p>A 16384 points, 2 channels oscilloscope
+capable of monitoring internal or external signals</p></td>
+</tr>
+<tr class="row-odd"><td><p>ASG</p></td>
+<td><p>2</p></td>
+<td><p>An arbitrary signal generator capable of generating
+various waveforms, and even gaussian white noise</p></td>
+</tr>
+<tr class="row-even"><td><p>IQ modulator/
+demodulator</p></td>
+<td><p>3</p></td>
+<td><p>An internal frequency reference is used to digitally
+demodulate a given input signal. The frequency
+reference can be outputed to serve as a driving signal.
+The slowly varying quadratures can also be used to
+remodulate the 2 phase-shifted internal references,
+turning the module
+into a very narrow bandpass filter. See the page
+<a class="reference internal" href="gui.html#iq-widget-label"><span class="std std-ref">Iq Widget</span></a> for more details</p></td>
+</tr>
+<tr class="row-odd"><td><p>PID</p></td>
+<td><p>3</p></td>
+<td><p>Proportional/Integrator/Differential feedback modules
+(In the current version, the differential gain is
+disabled). The gain of each parameter can be set
+independently and each module is also equiped with a
+4th order linear filter (applied before the PID
+correction)</p></td>
+</tr>
+<tr class="row-even"><td><p>IIR</p></td>
+<td><p>1</p></td>
+<td><p>An Infinite Impulse Response filter that can be used to
+realize real-time filters with comlex
+transfer-functions</p></td>
+</tr>
+<tr class="row-odd"><td><p>Trigger</p></td>
+<td><p>1</p></td>
+<td><p>A module to detect a transition on an analog signal.</p></td>
+</tr>
+<tr class="row-even"><td><p>Sampler</p></td>
+<td><p>1</p></td>
+<td><p>A module to sample each external or external signal</p></td>
+</tr>
+<tr class="row-odd"><td><p>Pwm</p></td>
+<td><p>4</p></td>
+<td><p>Modules to control the pulse width modulation pins of
+the redpitaya</p></td>
+</tr>
+<tr class="row-even"><td><p>Hk</p></td>
+<td><p>1</p></td>
+<td><p>House keeping module to monitor redpitaya constants and
+control the LED status</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Modules can be connected to each other arbitrarily. For this purpose, the modules contain a generic register <strong>input_select</strong> (except for ASG).
+Connecting the <strong>output_signal</strong> of submodule <strong>i</strong> to the <strong>input_signal</strong> of submodule <strong>j</strong> is done by setting the register <strong>input_select[j]</strong> to <strong>i</strong>;</p>
+<p>Similarly, a second, possibly different output is allowed for each module (except for scope and trigger): <strong>output_direct</strong>.
+This output is added to the analog output 1 and/or 2 depending on the value of the register <strong>output_select</strong>.</p>
+<p>The routing of digital signals within the different FPGA modules is handled by a DSP multiplexer coded in VHDL in the file <a class="reference external" href="https://github.com/pyrpl-fpga/pyrpl/blob/master/pyrpl/fpga/rtl/red_pitaya_dsp.v">red_pitaya_dsp.v</a>.
+An illustration of the DSP module’s principle is provided below:</p>
+<a class="reference internal image-reference" href="_images/DSP.jpg"><img alt="DSP Signal routing in PyRPL" class="align-center" src="_images/DSP.jpg" style="width: 467.0px; height: 592.0px;" />
+</a>
+</section>
+<section id="monitor-server">
+<h3><span class="section-number">4.3.2. </span>Monitor Server<a class="headerlink" href="#monitor-server" title="Link to this heading">¶</a></h3>
+<p>The monitor server is a lightweight application written in C (the source code is in the file <a class="reference external" href="https://github.com/pyrpl-fpga/pyrpl/blob/master/pyrpl/monitor_server/monitor_server.c">monitor_server.c</a>) and running on the redpitaya OS to allow remote writing and monitoring of FPGA registers.</p>
+<p>The program is launched on the redpitaya with (automatically done at startup):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">./</span><span class="n">monitor</span><span class="o">-</span><span class="n">server</span> <span class="n">PORT</span><span class="o">-</span><span class="n">NUMBER</span><span class="p">,</span> <span class="n">where</span> <span class="n">the</span> <span class="n">default</span> <span class="n">port</span> <span class="n">number</span> <span class="ow">is</span> <span class="mf">2222.</span>
+</pre></div>
+</div>
+<p>We allow for bidirectional data transfer. The client (python program) connects to the server, which in return accepts the connection.
+The client sends 8 bytes of data:</p>
+<ul class="simple">
+<li><p>Byte 1 is interpreted as a character: ‘r’ for read and ‘w’ for write, and ‘c’ for close. All other messages are ignored.</p></li>
+<li><p>Byte 2 is reserved.</p></li>
+<li><p>Bytes 3+4 are interpreted as unsigned int. This number n is the amount of 4-byte-units to be read or written. Maximum is 2^16.</p></li>
+<li><p>Bytes 5-8 are the start address to be written to.</p></li>
+</ul>
+<p>If the command is read, the server will then send the requested 4*n bytes to the client.
+If the command is write, the server will wait for 4*n bytes of data from the server and write them to the designated FPGA address space.
+If the command is close, or if the connection is broken, the server program will terminate.</p>
+<p>After this, the server will wait for the next command.</p>
+</section>
+<section id="python-package-pyrpl">
+<h3><span class="section-number">4.3.3. </span>Python package PyRPL<a class="headerlink" href="#python-package-pyrpl" title="Link to this heading">¶</a></h3>
+<p>The python package PyRPL defines all the necessary tools to abstract the communication layer between the client-computer and the redpitaya.
+In this way, it is possible to manipulate FPGA registers transparently, as if they were simple attributes of local python objects.
+We give here a brief overview of the main python objects in PyRPL.</p>
+<section id="the-module-class">
+<h4><span class="section-number">4.3.3.1. </span>The Module class<a class="headerlink" href="#the-module-class" title="Link to this heading">¶</a></h4>
+<p>Each FPGA module has a python counterpart: an instance of the class HardwareModule. The inheritance diagram of all HardwareModules is represented below:</p>
+digraph inheritanceb44b3b604d {
+bgcolor=transparent;
+rankdir=LR;
+size=&quot;8.0, 12.0&quot;;
+  &quot;AcquisitionModule&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;When an asynchronous acquisition is running&quot;];
+  &quot;Module&quot; -&gt; &quot;AcquisitionModule&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;DspModule&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;A module with an input and an auxiliary output_direct signal.&quot;];
+  &quot;HardwareModule&quot; -&gt; &quot;DspModule&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;SignalModule&quot; -&gt; &quot;DspModule&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;FilterModule&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;Setup Attributes:&quot;];
+  &quot;DspModule&quot; -&gt; &quot;FilterModule&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;HardwareModule&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;Module that directly maps a FPGA module. In addition to BaseModule's&quot;];
+  &quot;Module&quot; -&gt; &quot;HardwareModule&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;IIR&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;Setup Attributes:&quot;];
+  &quot;FilterModule&quot; -&gt; &quot;IIR&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;Iq&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;A modulator/demodulator module.&quot;];
+  &quot;FilterModule&quot; -&gt; &quot;Iq&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;Module&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;A module is a component of pyrpl doing a specific task.&quot;];
+  &quot;Pid&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;A proportional/Integrator/Differential filter.&quot;];
+  &quot;FilterModule&quot; -&gt; &quot;Pid&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;Pwm&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;Auxiliary outputs. PWM0-3 correspond to pins 17-20 on E2 connector.&quot;];
+  &quot;DspModule&quot; -&gt; &quot;Pwm&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;Sampler&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;this module provides a sample of each signal.&quot;];
+  &quot;HardwareModule&quot; -&gt; &quot;Sampler&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;Scope&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;Setup Attributes:&quot;];
+  &quot;HardwareModule&quot; -&gt; &quot;Scope&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;AcquisitionModule&quot; -&gt; &quot;Scope&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;SignalModule&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;any module that can be passed as an input to another module&quot;];
+  &quot;Module&quot; -&gt; &quot;SignalModule&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;Trig&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;The trigger module implements a full-rate trigger on a DSP signal.&quot;];
+  &quot;FilterModule&quot; -&gt; &quot;Trig&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+}
+<p>For more complex functionalities, such as those involving the concurrent use of several FPGA modules,
+purely software modules can be created. Those modules only inherit from the base class Module and they don’t have an FPGA counterpart. Below, the inheritance diagram of all software modules:</p>
+digraph inheritance45bd9e3d71 {
+bgcolor=transparent;
+rankdir=LR;
+size=&quot;8.0, 12.0&quot;;
+  &quot;AcquisitionModule&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;When an asynchronous acquisition is running&quot;];
+  &quot;Module&quot; -&gt; &quot;AcquisitionModule&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;Asgs&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;Setup Attributes:&quot;];
+  &quot;ModuleManager&quot; -&gt; &quot;Asgs&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;CurveViewer&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;This Module allows to browse through curves that were taken with pyrpl&quot;];
+  &quot;Module&quot; -&gt; &quot;CurveViewer&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;Iirs&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;Only one iir, but it should be protected by the slave/owner mechanism.&quot;];
+  &quot;ModuleManager&quot; -&gt; &quot;Iirs&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;Iqs&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;Setup Attributes:&quot;];
+  &quot;ModuleManager&quot; -&gt; &quot;Iqs&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;Lockbox&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;A Module that allows to perform feedback on systems that are well described&quot;];
+  &quot;LockboxModule&quot; -&gt; &quot;Lockbox&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;LockboxModule&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;Setup Attributes:&quot;];
+  &quot;Module&quot; -&gt; &quot;LockboxModule&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;Loop&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;Setup Attributes:&quot;];
+  &quot;Module&quot; -&gt; &quot;Loop&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;Module&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;A module is a component of pyrpl doing a specific task.&quot;];
+  &quot;ModuleManager&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;Manages access to hardware modules. It is created from a list of&quot;];
+  &quot;Module&quot; -&gt; &quot;ModuleManager&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;NetworkAnalyzer&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;Using an IQ module, the network analyzer can measure the complex coherent&quot;];
+  &quot;AcquisitionModule&quot; -&gt; &quot;NetworkAnalyzer&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;SignalModule&quot; -&gt; &quot;NetworkAnalyzer&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;PlotLoop&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;Setup Attributes:&quot;];
+  &quot;Loop&quot; -&gt; &quot;PlotLoop&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;PyrplConfig&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;This Module allows the Gui to configure the global settins, such as redpitaya and pyrpl&quot;];
+  &quot;Module&quot; -&gt; &quot;PyrplConfig&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;Scopes&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;Only one scope, but it should be protected by the slave/owner mechanism.&quot;];
+  &quot;ModuleManager&quot; -&gt; &quot;Scopes&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;SignalModule&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;any module that can be passed as an input to another module&quot;];
+  &quot;Module&quot; -&gt; &quot;SignalModule&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;SoftwarePidLoop&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;Setup Attributes:&quot;];
+  &quot;PlotLoop&quot; -&gt; &quot;SoftwarePidLoop&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;SpectrumAnalyzer&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;A spectrum analyzer is composed of an IQ demodulator, followed by a scope.&quot;];
+  &quot;AcquisitionModule&quot; -&gt; &quot;SpectrumAnalyzer&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;Trigs&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;Only one trig, but it should be protected by the slave/owner mechanism.&quot;];
+  &quot;ModuleManager&quot; -&gt; &quot;Trigs&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+}
+<p>In addition, to prevent a hardware resource from being used twice, HardwareModules should be accessed via the ModuleManagers which takes care of reserving them for a specific user or Module. For example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span> <span class="c1"># import pyrpl library</span>
+ <span class="kn">from</span><span class="w"> </span><span class="nn">pyrpl</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pyrpl</span>
+
+ <span class="c1"># create an interface to the Red Pitaya</span>
+ <span class="n">pyrpl</span> <span class="o">=</span> <span class="n">Pyrpl</span><span class="p">()</span>
+
+<span class="c1"># reserve the scope for user &#39;username&#39;</span>
+ <span class="k">with</span> <span class="n">pyrpl</span><span class="o">.</span><span class="n">scopes</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;username&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">mod</span><span class="p">:</span>
+      <span class="n">curve</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">single</span><span class="p">()</span> <span class="c1"># acquire a curve</span>
+<span class="c1"># The scope is freed for later use at this point</span>
+</pre></div>
+</div>
+</section>
+<section id="the-proprety-descriptors">
+<h4><span class="section-number">4.3.3.2. </span>The Proprety descriptors<a class="headerlink" href="#the-proprety-descriptors" title="Link to this heading">¶</a></h4>
+<p>HardwareModules are essentially a list of FPGA registers that can be accessed transparently such as on the following example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># import pyrpl library</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pyrpl</span>
+
+<span class="c1"># create an interface to the Red Pitaya</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">pyrpl</span><span class="o">.</span><span class="n">Pyrpl</span><span class="p">()</span><span class="o">.</span><span class="n">redpitaya</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">hk</span><span class="o">.</span><span class="n">led</span><span class="p">)</span> <span class="c1"># print the current led pattern</span>
+
+<span class="n">r</span><span class="o">.</span><span class="n">hk</span><span class="o">.</span><span class="n">led</span> <span class="o">=</span> <span class="mb">0b10101010</span>  <span class="c1"># change led pattern</span>
+</pre></div>
+</div>
+<p>Changing a register’s value should trigger the following actions:</p>
+<ul class="simple">
+<li><p>communicating the new value to the monitor_server for the FPGA update via a TCP-IP socket.</p></li>
+<li><p>the new value should be saved on-disk to restore the system in the same state at the next startup.</p></li>
+<li><p>in case a Graphical User Interface is running, the displayed value should be updated.</p></li>
+</ul>
+<p>To make sure all these actions are triggered by the simple python affectation, we use a <a class="reference external" href="https://docs.python.org/2/howto/descriptor.html">descriptor</a> pattern. The idea is to define
+setter and getter functions inside an auxilary “descriptor” class. The diagram below shows the inheritance diagram for the most common attribute descriptor types.</p>
+digraph inheritanceaac0d169e5 {
+bgcolor=transparent;
+rankdir=LR;
+size=&quot;8.0, 12.0&quot;;
+  &quot;BaseAttribute&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;base class for attribute - only used as a placeholder&quot;];
+  &quot;BaseProperty&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;A Property is a special type of attribute that is not mapping a fpga value,&quot;];
+  &quot;BaseAttribute&quot; -&gt; &quot;BaseProperty&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;BaseRegister&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;Registers implement the necessary read/write logic for storing an attribute on the redpitaya.&quot;];
+  &quot;BaseProperty&quot; -&gt; &quot;BaseRegister&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;BoolProperty&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;A property for a boolean value&quot;];
+  &quot;BaseProperty&quot; -&gt; &quot;BoolProperty&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;BoolRegister&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;Inteface for boolean values, 1: True, 0: False.&quot;];
+  &quot;BaseRegister&quot; -&gt; &quot;BoolRegister&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;BoolProperty&quot; -&gt; &quot;BoolRegister&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;FilterProperty&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;An attribute for a list of bandwidth. Each bandwidth has to be chosen in a list given by&quot;];
+  &quot;BaseProperty&quot; -&gt; &quot;FilterProperty&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;FilterRegister&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;Interface for up to 4 low-/highpass filters in series (filter_block.v)&quot;];
+  &quot;BaseRegister&quot; -&gt; &quot;FilterRegister&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;FilterProperty&quot; -&gt; &quot;FilterRegister&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;FloatProperty&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;An attribute for a float value.&quot;];
+  &quot;NumberProperty&quot; -&gt; &quot;FloatProperty&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;FloatRegister&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;Implements a fixed point register, seen like a (signed) float from python&quot;];
+  &quot;IntRegister&quot; -&gt; &quot;FloatRegister&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;FloatProperty&quot; -&gt; &quot;FloatRegister&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;IntProperty&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;];
+  &quot;NumberProperty&quot; -&gt; &quot;IntProperty&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;IntRegister&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;Register for integer values encoded on less than 32 bits.&quot;];
+  &quot;BaseRegister&quot; -&gt; &quot;IntRegister&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;IntProperty&quot; -&gt; &quot;IntRegister&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;NumberProperty&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;Abstract class for ints and floats&quot;];
+  &quot;BaseProperty&quot; -&gt; &quot;NumberProperty&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;SelectProperty&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;];
+  &quot;BaseProperty&quot; -&gt; &quot;SelectProperty&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;SelectRegister&quot; [fillcolor=white,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,fontsize=10,height=0.25,shape=box,style=&quot;setlinewidth(0.5),filled&quot;,tooltip=&quot;Implements a selection register, such as for multiplexers.&quot;];
+  &quot;BaseRegister&quot; -&gt; &quot;SelectRegister&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;SelectProperty&quot; -&gt; &quot;SelectRegister&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+}
+<p>As for the distinction between software modules and hardware modules above, the properties that inherit from BaseRegister are directly mapping an FPGA register.
+On the other hand, software modules are using properties that are not in direct correspondance with an FPGA register. However, since they inherit from BaseAttribute,
+the load/save and GUI update mechanism is still implemented.</p>
+</section>
+<section id="module-states">
+<h4><span class="section-number">4.3.3.3. </span>Module states<a class="headerlink" href="#module-states" title="Link to this heading">¶</a></h4>
+<p>An important member of the Module class is the list <strong>_setup_attributes</strong>. This is a list of attribute names forming a subset of all module attributes. The value of the attributes in
+<strong>_setup_attributes</strong> constitutes the current state of the module. When the PyRPL instance has been created with a configuration file, the current state of each module is kept in-sync
+with the configuration file. This is particularly useful for GUI users who would like to keep the previous settings of all modules from one session to the next.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The config file is <em>not</em> kept in-sync with modules that are reserved by a user or another module. It is the responsibility of the user-script or owner module to keep track of the slave module state. Moreover, the slave-module is restored to the last current state whenever it becomes free.</p>
+</div>
+<p>The state of a module can be saved for later use in a separate section of the config file. The following example shows the basic use of the load/save API:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># import pyrpl library</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyrpl</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pyrpl</span>
+
+<span class="c1"># create an interface to the Red Pitaya</span>
+<span class="n">scope</span> <span class="o">=</span> <span class="n">Pyrpl</span><span class="p">(</span><span class="s1">&#39;new_config_file&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">redpitaya</span><span class="o">.</span><span class="n">scope</span>
+
+<span class="n">scope</span><span class="o">.</span><span class="n">duration</span> <span class="o">=</span> <span class="mf">1.</span> <span class="c1"># set curve duration to 1s</span>
+<span class="n">scope</span><span class="o">.</span><span class="n">save_state</span><span class="p">(</span><span class="s1">&#39;slow_scan&#39;</span><span class="p">)</span> <span class="c1"># save state with label &#39;slow_scan&#39;</span>
+<span class="n">scope</span><span class="o">.</span><span class="n">duration</span> <span class="o">=</span> <span class="mf">0.01</span> <span class="c1"># set curve duration to 0.01s</span>
+<span class="n">scope</span><span class="o">.</span><span class="n">save_state</span><span class="p">(</span><span class="s1">&#39;fast_scan&#39;</span><span class="p">)</span> <span class="c1"># save state with label &#39;fast_scan&#39;</span>
+<span class="n">scope</span><span class="o">.</span><span class="n">load_state</span><span class="p">(</span><span class="s1">&#39;slow_scan&#39;</span><span class="p">)</span> <span class="c1"># load state &#39;slow_scan&#39;</span>
+<span class="n">scope</span><span class="o">.</span><span class="n">single</span><span class="p">()</span> <span class="c1"># acquire curve with a 1s duration</span>
+</pre></div>
+</div>
+</section>
+<section id="automatic-gui-creation">
+<h4><span class="section-number">4.3.3.4. </span>Automatic GUI creation<a class="headerlink" href="#automatic-gui-creation" title="Link to this heading">¶</a></h4>
+<p>Designing Graphical User Interface can be a tedious work. However, since module attributes are defined in a uniform fashion across the project,
+most of the GUI creation can be handled automatically. Our GUI is based on the very popular and cross-platform library <a class="reference external" href="https://riverbankcomputing.com/software/pyqt/intro">PyQt</a>
+in conjunction with the <a class="reference external" href="https://pypi.org/project/QtPy/">qtpy</a> abstraction layer.</p>
+<p>Each PyRPL module is represented by a widget in the Main PyRPL window. The list of attributes to display in the GUI is defined in the Module class by the class member <strong>_gui_attributes</strong>.
+When the module widget is created, sub-widgets are automatically created to manipulate the value of each attribute listed in <strong>_gui_attributes</strong>.</p>
+</section>
+<section id="example-definition-of-the-pid-class">
+<h4><span class="section-number">4.3.3.5. </span>Example: definition of the Pid class<a class="headerlink" href="#example-definition-of-the-pid-class" title="Link to this heading">¶</a></h4>
+<p>The following is extracted from <a class="reference external" href="https://github.com/pyrpl-fpga/pyrpl/blob/master/pyrpl/hardware_modules/pid.py">pid.py</a></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Pid</span><span class="p">(</span><span class="n">FilterModule</span><span class="p">):</span>
+    <span class="c1"># Type of widget to use for this Module class</span>
+    <span class="c1"># should derive from ModuleWidget</span>
+    <span class="n">_widget_class</span> <span class="o">=</span> <span class="n">PidWidget</span>
+
+    <span class="c1"># QObject used to communicate with the widget</span>
+    <span class="n">_signal_launcher</span> <span class="o">=</span> <span class="n">SignalLauncherPid</span>
+
+    <span class="c1"># List of attributes forming the module state</span>
+    <span class="n">_setup_attributes</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;input&quot;</span><span class="p">,</span> <span class="c1"># defined in base class FilterModule</span>
+                         <span class="s2">&quot;output_direct&quot;</span><span class="p">,</span> <span class="c1"># defined in base class FilterModule</span>
+                         <span class="s2">&quot;setpoint&quot;</span><span class="p">,</span>
+                         <span class="s2">&quot;p&quot;</span><span class="p">,</span>
+                         <span class="s2">&quot;i&quot;</span><span class="p">,</span>
+                         <span class="c1">#&quot;d&quot;, # Not implemented in the current version of PyRPL</span>
+                         <span class="s2">&quot;inputfilter&quot;</span><span class="p">,</span>
+                         <span class="s2">&quot;max_voltage&quot;</span><span class="p">,</span>
+                         <span class="s2">&quot;min_voltage&quot;</span><span class="p">]</span>
+
+    <span class="c1"># list of attribtue to display in the GUI</span>
+    <span class="n">_gui_attributes</span> <span class="o">=</span> <span class="n">_setup_attributes</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;ival&quot;</span><span class="p">]</span>
+
+    <span class="c1"># Actions to perform immediately after a state has been loaded</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        sets up the pid (just setting the attributes is OK).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="c1"># Below are the different attributes of a PID module (mostly registers)</span>
+
+    <span class="n">ival</span> <span class="o">=</span> <span class="n">IValAttribute</span><span class="p">(</span><span class="nb">min</span><span class="o">=-</span><span class="mi">4</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">increment</span><span class="o">=</span> <span class="mf">8.</span> <span class="o">/</span> <span class="mi">2</span><span class="o">**</span><span class="mi">16</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s2">&quot;Current &quot;</span>
+            <span class="s2">&quot;value of the integrator memory (i.e. pid output voltage offset)&quot;</span><span class="p">)</span>
+
+    <span class="n">setpoint</span> <span class="o">=</span> <span class="n">FloatRegister</span><span class="p">(</span><span class="mh">0x104</span><span class="p">,</span> <span class="n">bits</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span> <span class="mi">2</span> <span class="o">**</span><span class="mi">13</span><span class="p">,</span>
+                             <span class="n">doc</span><span class="o">=</span><span class="s2">&quot;pid setpoint [volts]&quot;</span><span class="p">)</span>
+
+    <span class="n">min_voltage</span> <span class="o">=</span> <span class="n">FloatRegister</span><span class="p">(</span><span class="mh">0x124</span><span class="p">,</span> <span class="n">bits</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span> <span class="mi">2</span> <span class="o">**</span><span class="mi">13</span><span class="p">,</span>
+                                <span class="n">doc</span><span class="o">=</span><span class="s2">&quot;minimum output signal [volts]&quot;</span><span class="p">)</span>
+    <span class="n">max_voltage</span> <span class="o">=</span> <span class="n">FloatRegister</span><span class="p">(</span><span class="mh">0x128</span><span class="p">,</span> <span class="n">bits</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span> <span class="mi">2</span> <span class="o">**</span><span class="mi">13</span><span class="p">,</span>
+                                <span class="n">doc</span><span class="o">=</span><span class="s2">&quot;maximum output signal [volts]&quot;</span><span class="p">)</span>
+
+    <span class="n">p</span> <span class="o">=</span> <span class="n">GainRegister</span><span class="p">(</span><span class="mh">0x108</span><span class="p">,</span> <span class="n">bits</span><span class="o">=</span><span class="n">_GAINBITS</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span> <span class="mi">2</span> <span class="o">**</span><span class="n">_PSR</span><span class="p">,</span>
+                      <span class="n">doc</span><span class="o">=</span><span class="s2">&quot;pid proportional gain [1]&quot;</span><span class="p">)</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">GainRegister</span><span class="p">(</span><span class="mh">0x10C</span><span class="p">,</span> <span class="n">bits</span><span class="o">=</span><span class="n">_GAINBITS</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span> <span class="mi">2</span> <span class="o">**</span><span class="n">_ISR</span> <span class="o">*</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span>
+                                                  <span class="mf">8e-9</span><span class="p">,</span>
+                      <span class="n">doc</span><span class="o">=</span><span class="s2">&quot;pid integral unity-gain frequency [Hz]&quot;</span><span class="p">)</span>
+    <span class="p">(</span><span class="o">...</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The generated widget is represented below:</p>
+<a class="reference internal image-reference" href="_images/pid_example.jpg"><img alt="The PID widget" class="align-center" src="_images/pid_example.jpg" style="width: 1114.0px; height: 124.0px;" />
+</a>
+</section>
+</section>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="developer_guide/index.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title"><span class="section-number">5. </span>Notes for developers</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="api.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title"><span class="section-number">3. </span>API manual</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2014-2025, Leonhard Neuhaus, Samuel Deléglise, Michaël Croquette 
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">4. Basics of the PyRPL Architecture</a><ul>
+<li><a class="reference internal" href="#motivation">4.1. Motivation</a></li>
+<li><a class="reference internal" href="#hardware-platform-red-pitaya">4.2. Hardware Platform - Red Pitaya</a></li>
+<li><a class="reference internal" href="#software-infrastructure">4.3. Software Infrastructure</a><ul>
+<li><a class="reference internal" href="#fpga-modules">4.3.1. FPGA modules</a></li>
+<li><a class="reference internal" href="#monitor-server">4.3.2. Monitor Server</a></li>
+<li><a class="reference internal" href="#python-package-pyrpl">4.3.3. Python package PyRPL</a><ul>
+<li><a class="reference internal" href="#the-module-class">4.3.3.1. The Module class</a></li>
+<li><a class="reference internal" href="#the-proprety-descriptors">4.3.3.2. The Proprety descriptors</a></li>
+<li><a class="reference internal" href="#module-states">4.3.3.3. Module states</a></li>
+<li><a class="reference internal" href="#automatic-gui-creation">4.3.3.4. Automatic GUI creation</a></li>
+<li><a class="reference internal" href="#example-definition-of-the-pid-class">4.3.3.5. Example: definition of the Pid class</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=81b53a12"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>
