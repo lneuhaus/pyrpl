@@ -1,6 +1,7 @@
 import logging
 
 import numpy as np
+import pytest
 
 from pyrpl.attributes import (
     BaseRegister,
@@ -17,6 +18,24 @@ from pyrpl.modules import Module
 from .test_redpitaya import TestRedpitaya
 
 logger = logging.getLogger(name=__name__)
+
+# Registers that only exist in the FPGA profiles with a capability:
+# (module class name, register name prefix) -> capability
+PROFILE_REGISTERS = {
+    ("Iq", "vco_"): "iq_vco",
+}
+
+
+def missing_capability(module, regkey, capabilities):
+    """Capability required by the register and absent from the profile, or None."""
+    for (class_name, prefix), capability in PROFILE_REGISTERS.items():
+        if (
+            type(module).__name__ == class_name
+            and regkey.startswith(prefix)
+            and capability not in capabilities
+        ):
+            return capability
+    return None
 
 
 class TestRegisters(TestRedpitaya):
@@ -44,6 +63,7 @@ class TestRegisters(TestRedpitaya):
         # I don't think it changes anything here keeping both for nosetests
         if self.r is None:
             raise AssertionError()
+        capabilities = self.r.fpga_profile.capabilities
         for modulekey, module in self.r.__dict__.items():
             if isinstance(module, Module):
                 logger.info("Scanning module %s...", modulekey)
@@ -51,6 +71,9 @@ class TestRegisters(TestRedpitaya):
                     if isinstance(regclass, BaseRegister):
                         logger.info("Scanning register %s...", regkey)
                         with subtests.test(modulekey=modulekey, regkey=regkey):
+                            capability = missing_capability(module, regkey, capabilities)
+                            if capability is not None:
+                                pytest.skip(f"FPGA profile lacks capability {capability}")
                             self.register_validation(module, modulekey, regclass, regkey)
 
     def register_validation(self, module, modulekey, reg, regkey):
