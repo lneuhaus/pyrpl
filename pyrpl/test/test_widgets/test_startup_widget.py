@@ -1,8 +1,13 @@
 import logging
 
+import pytest
+
 from pyrpl.async_utils import sleep
 from pyrpl.test.test_base import TestPyrpl
 from pyrpl.widgets.startup_widget import HostnameSelectorWidget
+
+# passes on the simulated (_FAKE_) Red Pitaya too
+pytestmark = pytest.mark.simulation
 
 logger = logging.getLogger(name=__name__)
 

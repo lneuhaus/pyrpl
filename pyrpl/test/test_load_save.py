@@ -3,12 +3,17 @@ import logging
 import numbers
 from copy import deepcopy
 
+import pytest
+
 from pyrpl.async_utils import sleep
 from pyrpl.attributes import SelectProperty
 from pyrpl.software_modules import Lockbox, SpectrumAnalyzer
 from pyrpl.software_modules.module_managers import ModuleManager
 from pyrpl.test.test_attribute import DummyModule
 from pyrpl.test.test_base import TestPyrpl
+
+# passes on the simulated (_FAKE_) Red Pitaya too
+pytestmark = pytest.mark.simulation
 
 logger = logging.getLogger(name=__name__)
 

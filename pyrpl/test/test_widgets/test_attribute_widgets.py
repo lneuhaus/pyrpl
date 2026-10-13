@@ -1,6 +1,7 @@
 import logging
 
 import numpy as np
+import pytest
 from qtpy import QtCore, QtTest
 
 from pyrpl import APP
@@ -10,6 +11,9 @@ from pyrpl.hardware_modules.pid import Pid
 from pyrpl.software_modules import NetworkAnalyzer
 from pyrpl.test.test_base import TestPyrpl
 from pyrpl.widgets.attribute_widgets import NumberAttributeWidget
+
+# passes on the simulated (_FAKE_) Red Pitaya too
+pytestmark = pytest.mark.simulation
 
 logger = logging.getLogger(name=__name__)
 

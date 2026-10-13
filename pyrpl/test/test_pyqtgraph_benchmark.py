@@ -10,6 +10,9 @@ from .. import APP
 from ..async_utils import sleep
 from .test_redpitaya import TestRedpitaya
 
+# passes on the simulated (_FAKE_) Red Pitaya too
+pytestmark = pytest.mark.simulation
+
 logger = logging.getLogger(name=__name__)
 
 

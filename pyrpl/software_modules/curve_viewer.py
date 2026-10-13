@@ -17,6 +17,8 @@ MAX_CURVES = 100  # maximum number of curves to display
 
 
 def all_curves(instance=None):
+    if hasattr(CurveDB, "all_pks"):  # only load the curves that are shown
+        return [CurveDB.get(pk) for pk in CurveDB.all_pks()[:MAX_CURVES]]
     return CurveDB.all()[:MAX_CURVES]
 
 

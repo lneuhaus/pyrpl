@@ -1,10 +1,15 @@
 import logging
 import numbers
 
+import pytest
+
 from pyrpl.attributes import BoolProperty, FilterProperty, FloatProperty, SelectProperty
 from pyrpl.module_attributes import ModuleProperty
 from pyrpl.modules import Module
 from pyrpl.test.test_base import TestPyrpl
+
+# passes on the simulated (_FAKE_) Red Pitaya too
+pytestmark = pytest.mark.simulation
 
 logger = logging.getLogger(name=__name__)
 

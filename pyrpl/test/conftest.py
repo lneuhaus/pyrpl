@@ -23,58 +23,75 @@ def pytest_report_header(config):
     return f"PyRPL runtime: Qt={qtpy.API_NAME}, NumPy={np.__version__}"
 
 
-# Global state to determine what we need to build
-_source_config_file = "nosetests_source.yml"
-_require_full_pyrpl = False
-
 # A container to standardize what the fixture returns
 # rp is always present; pyrpl is None if running in light mode
 HardwareSession = namedtuple("HardwareSession", ["rp", "pyrpl", "read_time", "write_time"])
 
+# Test files that only need the RedPitaya driver, not the full Pyrpl app
+LIGHT_TEST_FILES = ["test_redpitaya.py", "test_pyqtgraph_benchmark.py", "test_registers.py"]
+SIMULATED_HOSTNAMES = ("_FAKE_", "_FAKE_REDPITAYA_")
+
+
+def _real_board():
+    """True when REDPITAYA_HOSTNAME designates a physical Red Pitaya."""
+    return os.environ.get("REDPITAYA_HOSTNAME", "") not in ("", *SIMULATED_HOSTNAMES)
+
+
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers",
+        "hardware: uses the Red Pitaya session (added automatically to every test "
+        "that depends on the hardware_session fixture)",
+    )
+    config.addinivalue_line(
+        "markers",
+        "simulation: a hardware test that also passes on a simulated (_FAKE_) Red Pitaya",
+    )
+    # Without a board, the session uses the simulated Red Pitaya instead of
+    # asking for a hostname in a GUI.
+    if not _real_board():
+        os.environ["REDPITAYA_HOSTNAME"] = "_FAKE_"
+
 
 def pytest_collection_modifyitems(session, config, items):
-    """
-    Hook called after test collection.
-    Determines if we need the full Pyrpl app or just the RedPitaya driver.
-    """
-    global _source_config_file
-    global _require_full_pyrpl
+    """Marks the tests that use the Red Pitaya session.
 
-    found_attribute = False
-    found_lockbox = False
-    found_heavy_test = False
-
+    Without a real board (REDPITAYA_HOSTNAME unset or _FAKE_), hardware tests
+    are skipped, except those marked simulation. Select the tests to run with
+    -m hardware (board tests) or -m "not hardware or simulation" (no board).
+    """
+    real_board = _real_board()
+    skip = pytest.mark.skip(reason="needs a real Red Pitaya: set REDPITAYA_HOSTNAME")
     for item in items:
-        test_file = item.fspath.basename
+        if "hardware_session" not in item.fixturenames:
+            continue
+        item.add_marker(pytest.mark.hardware)
+        if not real_board and item.get_closest_marker("simulation") is None:
+            item.add_marker(skip)
 
-        # If we find any file that ISN'T TestRedpitaya, we assume we need full Pyrpl
 
-        if test_file not in [
-            "test_redpitaya.py",
-            "test_pyqtgraph_benchmark.py",
-            "test_registers.py",
-        ]:
-            found_heavy_test = True
-
-        if test_file == "test_attribute.py":
-            found_attribute = True
-        elif test_file == "test_lockbox.py":
-            found_lockbox = True
-
-    _require_full_pyrpl = found_heavy_test
-
-    # Config selection logic
-    if found_attribute:
-        _source_config_file = "nosetests_source_dummy_module.yml"
-    elif found_lockbox:
-        _source_config_file = "nosetests_source_lockbox.yml"
-
-    mode = "FULL PYRPL APP" if _require_full_pyrpl else "LIGHT REDPITAYA DRIVER"
-    logger.info(f"Test Collection Complete. Mode: {mode}")
+def _session_mode(items):
+    """Returns (full Pyrpl app needed, source config file) for the tests to run."""
+    files = {
+        item.fspath.basename
+        for item in items
+        if "hardware_session" in item.fixturenames and item.get_closest_marker("skip") is None
+    }
+    require_full_pyrpl = any(name not in LIGHT_TEST_FILES for name in files)
+    if "test_attribute.py" in files:
+        source_config_file = "nosetests_source_dummy_module.yml"
+    elif "test_lockbox.py" in files:
+        source_config_file = "nosetests_source_lockbox.yml"
+    else:
+        source_config_file = "nosetests_source.yml"
+    return require_full_pyrpl, source_config_file
 
 
 def _apply_keepalive(rp_object):
     """Helper to apply the GitHub Actions/NAT fix to any RedPitaya object"""
+    if not hasattr(rp_object, "ssh"):
+        return  # simulated Red Pitaya: no connection to keep alive
+
     # 1. SSH Transport KeepAlive
     try:
         if hasattr(rp_object.ssh, "scp") and hasattr(rp_object.ssh.scp, "transport"):
@@ -108,11 +125,15 @@ def _apply_keepalive(rp_object):
 
 
 @pytest.fixture(scope="session")
-def hardware_session():
+def hardware_session(request):
     """
     Creates either a full Pyrpl instance OR just a RedPitaya instance
     depending on the test requirements.
+
+    The session is only created when a selected test uses it, so tests that
+    do not need a Red Pitaya never connect to one.
     """
+    require_full_pyrpl, source_config_file = _session_mode(request.session.items)
     pyrpl_obj = None
     rp_obj = None
     tmp_file = "nosetests_config.yml"
@@ -123,10 +144,10 @@ def hardware_session():
         with contextlib.suppress(OSError):
             os.remove(tmp_conf)
 
-    if _require_full_pyrpl:
+    if require_full_pyrpl:
         # --- HEAVY PATH ---
-        logger.info(f"Initializing Full Pyrpl with source: {_source_config_file}")
-        pyrpl_obj = Pyrpl(config=tmp_file, source=_source_config_file, reloadfpga=True)
+        logger.info(f"Initializing Full Pyrpl with source: {source_config_file}")
+        pyrpl_obj = Pyrpl(config=tmp_file, source=source_config_file, reloadfpga=True)
         rp_obj = pyrpl_obj.rp
     else:
         # --- LIGHT PATH ---
@@ -152,6 +173,7 @@ def hardware_session():
     write_time = (time() - t0) / float(N)
 
     print(f"Est. Read/Write: {read_time * 1000.0:.1f} ms / {write_time * 1000.0:.1f} ms")
+    _check_session(read_time, write_time, pyrpl_obj, require_full_pyrpl)
 
     # Yield the container
     yield HardwareSession(rp=rp_obj, pyrpl=pyrpl_obj, read_time=read_time, write_time=write_time)
@@ -179,18 +201,9 @@ def hardware_session():
         sleep(0.1)
 
 
-@pytest.fixture(scope="session", autouse=True)
-def pyrpl_session_sanity(hardware_session):
-    """
-    Global hardware sanity check.
-    Runs exactly once per pytest session, no matter what tests are selected.
-    """
-
+def _check_session(read_time, write_time, pyrpl, require_full_pyrpl):
+    """Hardware sanity check, run once when the session is created."""
     logger.info("Running session sanity checks...")
-
-    read_time = hardware_session.read_time
-    write_time = hardware_session.write_time
-    pyrpl = hardware_session.pyrpl
 
     try:
         maxtime = global_config.test.max_communication_time
@@ -212,7 +225,7 @@ def pyrpl_session_sanity(hardware_session):
             returncode=1,
         )
 
-    if pyrpl is None and _require_full_pyrpl:
+    if pyrpl is None and require_full_pyrpl:
         pytest.exit("Pyrpl instance was not created!", returncode=1)
 
     logger.info("Hardware sanity checks passed.")

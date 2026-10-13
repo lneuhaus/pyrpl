@@ -13,6 +13,9 @@ from ..widgets.attribute_widgets import (
 )
 from .test_base import TestPyrpl
 
+# passes on the simulated (_FAKE_) Red Pitaya too
+pytestmark = pytest.mark.simulation
+
 logger = logging.getLogger(name=__name__)
 
 
