@@ -12,11 +12,63 @@ on:
   workflow_dispatch:  # Allows manual triggering from GitHub UI
 
 jobs:
+  # The RedPitaya is not always connected. On push / pull_request, an offline
+  # board skips the hardware tests instead of failing them; run the workflow
+  # manually (workflow_dispatch) once the board is back. A manual run with an
+  # offline board fails, since the tests were explicitly requested.
+  check-board:
+    name: Check RedPitaya availability
+    runs-on: [self-hosted]
+    timeout-minutes: 5
+    outputs:
+      available: ${{ steps.probe.outputs.available }}
+    env:
+      REDPITAYA_HOSTNAME: ${{ secrets.REDPITAYA_PUBLIC_IP }}
+      REDPITAYA_SSHPORT: ${{ secrets.REDPITAYA_SSH_PORT }}
+    steps:
+    - name: Probe RedPitaya SSH endpoint
+      id: probe
+      shell: bash
+      run: |
+        available=false
+        if [ -z "$REDPITAYA_HOSTNAME" ] || [ -z "$REDPITAYA_SSHPORT" ]; then
+          # e.g. Dependabot or fork pull requests, which get no repository secrets
+          reason="RedPitaya secrets are not available to this run"
+        else
+          reason="RedPitaya SSH endpoint did not answer"
+          for attempt in 1 2 3; do
+            # Expect an SSH banner, not just an open TCP port.
+            banner=$(timeout 10 bash -c \
+              'exec 3<>/dev/tcp/$REDPITAYA_HOSTNAME/$REDPITAYA_SSHPORT && head -c 4 <&3' \
+              2>/dev/null || true)
+            if [ "$banner" = "SSH-" ]; then
+              available=true
+              break
+            fi
+            echo "Attempt $attempt/3: board not reachable"
+            [ $attempt -lt 3 ] && sleep 10
+          done
+        fi
+        echo "available=$available" >> "$GITHUB_OUTPUT"
+
+        if [ "$available" = true ]; then
+          echo "RedPitaya is reachable"
+        elif [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+          echo "::error::$reason. Connect the board and run the workflow again."
+          exit 1
+        else
+          echo "::warning::$reason. Hardware tests skipped; run the 'Hardware CI' workflow manually once the board is connected."
+          echo "### Hardware tests skipped" >> "$GITHUB_STEP_SUMMARY"
+          echo "$reason. Run this workflow manually (Actions → Hardware CI → Run workflow) once the board is connected." >> "$GITHUB_STEP_SUMMARY"
+        fi
+
   # Hardware-in-the-loop tests against the real RedPitaya, run on the
   # self-hosted Oracle runner so its IP can stay allowlisted on the Freebox
   # (GitHub-hosted runners have rotating IPs and can't be pinned like this).
   test:
     name: Hardware tests (Python ${{ matrix.python-version }})
+    needs: check-board
+    if: needs.check-board.outputs.available == 'true'
     runs-on: [self-hosted]
     # A degraded remote hardware connection must not monopolize the only
     # physical Red Pitaya runner indefinitely. Normal runs take about 7 min.
@@ -47,7 +99,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Set up uv
-      uses: astral-sh/setup-uv@v9
+      uses: astral-sh/setup-uv@v10.2.0
       with:
         version: "0.10.11"
         # The self-hosted runner retains uv's local cache between jobs.
@@ -151,7 +203,7 @@ jobs:
   # Notification job
   notify:
     runs-on: ubuntu-latest
-    needs: test
+    needs: [check-board, test]
     if: always()
 
     steps:
@@ -159,8 +211,12 @@ jobs:
       if: ${{ needs.test.result == 'success' }}
       run: echo "All hardware test jobs completed successfully!"
 
+    - name: Notify on skip
+      if: ${{ needs.check-board.result == 'success' && needs.test.result == 'skipped' }}
+      run: echo "RedPitaya offline, hardware tests skipped. Run this workflow manually once it is connected."
+
     - name: Notify on failure
-      if: ${{ needs.test.result != 'success' }}
+      if: ${{ needs.test.result != 'success' && !(needs.check-board.result == 'success' && needs.test.result == 'skipped') }}
       run: |
         echo "Some hardware test jobs failed or were cancelled"
         exit 1
