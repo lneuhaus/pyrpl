@@ -1527,10 +1527,16 @@ class CurveSelectProperty(SelectProperty):
         SelectProperty.__init__(self, options=self._default_options, **kwargs)
 
     def _default_options(self):
+        # the pks come from the file names: loading every curve to read its pk
+        # took seconds per call with a few thousand saved curves
+        if hasattr(CurveDB, "all_pks"):
+            pks = list(CurveDB.all_pks())
+        else:  # custom curve databases (global_config.general.curvedb)
+            pks = [curve.pk for curve in CurveDB.all()]
         if self.no_curve_first:
-            return [-1] + [curve.pk for curve in CurveDB.all()]
+            return [-1] + pks
         else:
-            return [curve.pk for curve in CurveDB.all()] + [-1]
+            return pks + [-1]
         # return OrderedDict([(k, k) for k in (CurveDB.all()) + [-1]])
 
     def validate_and_normalize(self, obj, value):

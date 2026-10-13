@@ -169,6 +169,13 @@ jobs:
         sudo pkill -x Xvfb || true
         pkill -f "python -m pytest pyrpl/test" || true
 
+    # The runner keeps ~/pyrpl_user_dir between jobs: the curves saved by
+    # every run accumulated there and slowed the GUI tests down run after run.
+    # RUNNER_TEMP is emptied after each job.
+    - name: Use a fresh PyRPL user directory
+      shell: bash
+      run: echo "PYRPL_USER_DIR=$RUNNER_TEMP/pyrpl_user_dir" >> "$GITHUB_ENV"
+
     - name: Install system dependencies
       run: |
         sudo apt-get update
