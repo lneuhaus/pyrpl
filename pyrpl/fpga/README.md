@@ -49,6 +49,7 @@ make_bin.bat legacy
 make_bin.bat no_iir
 make_bin.bat iir32
 make_bin.bat pid_derivative
+make_bin.bat arithmetic
 make_bin.bat cordic
 make_bin.bat cordic_vco
 ```
@@ -69,13 +70,15 @@ placement, physical optimization, and routing retain normal parallelism.
 
 Implementation directives are selected by each profile. The `no_iir` profile
 runs two post-route physical-optimization passes; `pid_derivative` also runs
-two because of its extra DSP paths, `default` and `iir32` run one, while the
+two because of its extra DSP paths, and `arithmetic` runs two for its
+pipelined divider. `default` and `iir32` run one, while the
 compatibility-only `legacy` profile skips that expensive step.
 
 | Build profile | IIR | PID filters | DSP modules |
 |---------------|-----|-------------|-------------|
 | `default` | 24-bit, 8-stage | none | 3 PID, 3 IQ |
 | `pid_derivative` | none | 4 input stages plus band-limited D | 3 PID, 3 IQ |
+| `arithmetic` | none | band-limited D, no input filters | 3 PID, 3 IQ, two-input arithmetic |
 | `cordic` | none | none | 3 PID, 3 IQ, standalone CORDIC plus CORDICs in IQ0/IQ1 |
 | `cordic_vco` | none | none | same three CORDICs, with VCO control on all IQs |
 | `legacy` | original 32-bit, 14-stage | 4 input stages | 3 PID, 3 IQ |
@@ -92,6 +95,18 @@ filter breaks the otherwise long four-stage bypass path and adds one 8 ns cycle
 to the PID latency; the profile manifest includes this delay in the Python
 transfer-function model.
 
+The `arithmetic` profile uses slot 4 for a two-input module and enables the
+band-limited derivative on all three PIDs without restoring their input
+prefilters. Its modes are `polynomial` (`a*input**p + b*input_b**q`, with each
+exponent selectable as 1 or 2), `product` (`a*input*input_b`), and `ratio`
+(`a*input/input_b`). Inputs use normalized signed values and coefficients are
+signed Q8.16. Polynomial/product results take four FPGA cycles; the fully
+pipelined divider accepts a new sample every cycle and has sixteen cycles of
+latency. `denominator_min` protects division near zero, saturating nonzero
+results and setting `denominator_too_small`. Each input can be delayed by zero
+through seven cycles, which is useful when combining a direct signal with a
+PID-processed copy.
+
 The normalized cutoff calculation performs a numerical search. It is decorated
 with `@lru_cache(maxsize=None)`, so each of the 24 possible shift values is
 calculated only once per Python process. `maxsize=None` disables cache eviction;
@@ -100,7 +115,8 @@ is only a Python performance optimization and does not cache FPGA state.
 
 The specialized profiles retain the established FPGA address map. `no_iir`
 and `pid_derivative` leave address slot 4 inactive, `cordic` uses slot 4 for
-its standalone phase output, and `iir32` leaves PID slot 2 inactive. IQ2 is
+its standalone phase output, `arithmetic` uses it for its two-input arithmetic
+output, and `iir32` leaves PID slot 2 inactive. IQ2 is
 retained because it is used by the network analyzer. In the `cordic` profile,
 `cordic.input` selects I and `cordic.input_q` independently selects Q. Its
 output is `atan2(Q, I)` in turns, with 12 fractional phase bits, a two-bit
@@ -176,6 +192,16 @@ The script compiles the CORDIC and its SystemVerilog testbench with Vivado
 Generated simulator files remain under `build\cordic_sim`; success is reported
 as `CORDIC_TEST_PASS` followed by `CORDIC RTL simulation passed.`
 
+The arithmetic datapath has a corresponding standalone test:
+
+```bat
+cd pyrpl\fpga
+run_arithmetic_tb.bat
+```
+
+It checks polynomial, product, ratio, and protected divide-by-zero behavior.
+Success is reported as `ARITHMETIC_TEST_PASS`.
+
 The IQ trigger state machine has its own standalone RTL test:
 
 ```bat
@@ -206,6 +232,7 @@ vivado -nolog -nojournal -mode batch -source red_pitaya_vivado.tcl -tclargs lega
 vivado -nolog -nojournal -mode batch -source red_pitaya_vivado.tcl -tclargs no_iir build/no_iir
 vivado -nolog -nojournal -mode batch -source red_pitaya_vivado.tcl -tclargs iir32 build/iir32
 vivado -nolog -nojournal -mode batch -source red_pitaya_vivado.tcl -tclargs pid_derivative build/pid_derivative
+vivado -nolog -nojournal -mode batch -source red_pitaya_vivado.tcl -tclargs arithmetic build/arithmetic
 vivado -nolog -nojournal -mode batch -source red_pitaya_vivado.tcl -tclargs cordic build/cordic
 ```
 
@@ -216,6 +243,7 @@ the binary and shared device-tree overlay, and generates their SHA-256 hashes:
 python publish_fpga_profile.py no_iir
 python publish_fpga_profile.py iir32
 python publish_fpga_profile.py pid_derivative
+python publish_fpga_profile.py arithmetic
 ```
 
 The staged directory appears under `bitstreams/<profile>` and makes the profile
@@ -253,7 +281,7 @@ The pre-built .bin file and device tree are used if these files are not specifie
 ## FPGA profiles
 
 The `fpga_profile` setting selects a published, tested bitstream together with
-its Python hardware contract. The source tree contains six build profiles,
+its Python hardware contract. The source tree contains eight build profiles,
 but `available_fpga_profiles()` only lists profiles that have been staged under
 `bitstreams`.
 
@@ -325,6 +353,7 @@ building it, stage it before hardware testing:
 ```text
 cd pyrpl/fpga
 python publish_fpga_profile.py pid_derivative
+python publish_fpga_profile.py arithmetic
 python publish_fpga_profile.py cordic
 python publish_fpga_profile.py cordic_vco
 ```
@@ -338,7 +367,7 @@ Run several profiles as separate pytest sessions so each image is loaded and
 validated independently:
 
 ```powershell
-foreach ($profile in @("default", "legacy", "no_iir", "iir32", "pid_derivative", "cordic", "cordic_vco")) {
+foreach ($profile in @("default", "legacy", "no_iir", "iir32", "pid_derivative", "arithmetic", "cordic", "cordic_vco")) {
     $env:REDPITAYA_FPGA_PROFILE = $profile
     pytest pyrpl/test/test_hardware_modules
 }

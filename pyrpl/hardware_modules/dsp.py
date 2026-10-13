@@ -33,6 +33,7 @@ DSP_INPUTS = OrderedDict(
         ("trig", 3),
         ("iir", 4),
         ("cordic", 4),
+        ("arithmetic", 4),
         # ('scope0', 8), #same as asg0 by design
         # ('scope1', 9), #same as asg1 by design
         ("off", 15),

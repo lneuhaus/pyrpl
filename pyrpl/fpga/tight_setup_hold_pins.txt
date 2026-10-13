@@ -1,6 +1,18 @@
-+====================+===================+=================================================+
-| Launch Setup Clock | Launch Hold Clock | Pin                                             |
-+====================+===================+=================================================+
-| pll_adc_clk        | pll_adc_clk       | pwm[1]/b_reg[10]/D                              |
-| pll_adc_clk        | pll_adc_clk       | i_dsp/genblk3[3].i_trigger/adc_scht_ap_reg[0]/D |
-+--------------------+-------------------+-------------------------------------------------+
++====================+===================+==============================================================================================================================================+
+| Launch Setup Clock | Launch Hold Clock | Pin                                                                                                                                          |
++====================+===================+==============================================================================================================================================+
+| clk_fpga_3         | clk_fpga_3        | i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_wrack_reg/D                                                                         |
+| pll_adc_clk        | pll_adc_clk       | pwm[0]/b_reg[12]/D                                                                                                                           |
+| clk_fpga_3         | clk_fpga_3        | i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.INTERRUPT_CONTROL_I/GEN_IP_IRPT_STATUS_REG[5].GEN_REG_STATUS.ip_irpt_status_reg_reg[5]/D   |
+| clk_fpga_3         | clk_fpga_3        | i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.INTERRUPT_CONTROL_I/GEN_IP_IRPT_STATUS_REG[8].GEN_REG_STATUS.ip_irpt_status_reg_reg[8]/D   |
+| clk_fpga_3         | clk_fpga_3        | i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.INTERRUPT_CONTROL_I/GEN_IP_IRPT_STATUS_REG[4].GEN_REG_STATUS.ip_irpt_status_reg_reg[4]/D   |
+| clk_fpga_3         | clk_fpga_3        | i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.INTERRUPT_CONTROL_I/GEN_IP_IRPT_STATUS_REG[12].GEN_REG_STATUS.ip_irpt_status_reg_reg[12]/D |
+| clk_fpga_3         | clk_fpga_3        | i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.INTERRUPT_CONTROL_I/GEN_IP_IRPT_STATUS_REG[11].GEN_REG_STATUS.ip_irpt_status_reg_reg[11]/D |
+| clk_fpga_3         | clk_fpga_3        | i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.INTERRUPT_CONTROL_I/GEN_IP_IRPT_STATUS_REG[10].GEN_REG_STATUS.ip_irpt_status_reg_reg[10]/D |
+| clk_fpga_3         | clk_fpga_3        | i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.INTERRUPT_CONTROL_I/GEN_IP_IRPT_STATUS_REG[6].GEN_REG_STATUS.ip_irpt_status_reg_reg[6]/D   |
+| clk_fpga_3         | clk_fpga_3        | i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.INTERRUPT_CONTROL_I/GEN_IP_IRPT_STATUS_REG[1].GEN_REG_STATUS.ip_irpt_status_reg_reg[1]/D   |
+| clk_fpga_3         | clk_fpga_3        | i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.INTERRUPT_CONTROL_I/GEN_IP_IRPT_STATUS_REG[7].GEN_REG_STATUS.ip_irpt_status_reg_reg[7]/D   |
+| pll_adc_clk        | pll_adc_clk       | i_dsp/genblk6[7].iq_2_outputs/iq_i_sum_reg[60]/D                                                                                             |
+| pll_adc_clk        | pll_adc_clk       | i_dsp/genblk6[7].iq_2_outputs/iq_i_sum_reg[59]/D                                                                                             |
+| clk_fpga_3         | clk_fpga_3        | i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.INTERRUPT_CONTROL_I/GEN_IP_IRPT_STATUS_REG[2].GEN_REG_STATUS.ip_irpt_status_reg_reg[2]/D   |
++--------------------+-------------------+----------------------------------------------------------------------------------------------------------------------------------------------+

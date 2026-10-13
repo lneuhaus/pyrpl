@@ -52,6 +52,7 @@ import logging
 
 from ..modules import Module
 from ..widgets.module_widgets import (
+    ArithmeticManagerWidget,
     AsgManagerWidget,
     CordicManagerWidget,
     IirManagerWidget,
@@ -165,6 +166,12 @@ class ModuleManager(Module):
 
 class Asgs(ModuleManager):
     _widget_class = AsgManagerWidget
+
+
+class Arithmetics(ModuleManager):
+    """Manage the arithmetic module exposed by the arithmetic profile."""
+
+    _widget_class = ArithmeticManagerWidget
 
 
 class Pwms(ModuleManager):

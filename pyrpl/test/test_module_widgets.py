@@ -65,6 +65,8 @@ class TestModuleWidgets(TestPyrpl):
             + self.pyrpl.iqs.all_modules
             + self.pyrpl.pids.all_modules
         )
+        if hasattr(self.pyrpl, "arithmetics"):
+            modules += self.pyrpl.arithmetics.all_modules
         for module in modules:
             self.try_gui_module(module._create_widget())
 

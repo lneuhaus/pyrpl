@@ -56,7 +56,8 @@ module red_pitaya_dsp #(
 	parameter PID_DERIVATIVE = 0,
 	parameter PID_FILTERSTAGES = 4,
 	parameter PID_DERIVATIVE_FILTER_SHIFT = 4,
-	parameter IQ_VCO = 0
+	parameter IQ_VCO = 0,
+	parameter ARITHMETIC = 0
 )
 (
    // signals
@@ -153,6 +154,14 @@ reg [2-1:0] output_select [MODULES+EXTRAMODULES-1:0];
 // syncronization register to trigger simultaneous action of different dsp modules
 reg [MODULES-1:0] sync;
 
+// Slot 4 uses the ordinary input selector for input A and this independent
+// selector for input B. Address 0x14 is in the routing-register region and is
+// therefore not forwarded to the arithmetic block itself.
+reg [LOG_MODULES-1:0] arithmetic_input_b_select;
+wire signed [14-1:0] arithmetic_input_b =
+   (arithmetic_input_b_select == NONE) ? 14'sd0 :
+   output_signal[arithmetic_input_b_select];
+
 // bus read data of individual modules (only needed for 'real' modules)
 wire [ 32-1: 0] module_rdata [MODULES-1:0];  
 wire            module_ack   [MODULES-1:0];
@@ -207,7 +216,7 @@ reg  signed [   14+LOG_MODULES-1: 0] presum2 [CHANNELS-1-1:0];
 
 always @(posedge clk_i) begin
    if (rstn_i == 1'b0) begin
-     for (i=0;i<CHANNELS;i=i+1) begin
+     for (i=0;i<CHANNELS-1;i=i+1) begin
         presum1[i] <= {14+LOG_MODULES{1'b0}};
         presum2[i] <= {14+LOG_MODULES{1'b0}};
      end
@@ -260,6 +269,7 @@ always @(posedge clk_i) begin
 
       input_select [IIR] <= ADC1;
       output_select[IIR] <= OFF;
+      arithmetic_input_b_select <= ADC2;
 
       input_select [IQ0] <= ADC1;
       output_select[IQ0] <= OFF;
@@ -285,6 +295,9 @@ always @(posedge clk_i) begin
          if (sys_addr[16-1:0]==16'h00)     input_select[sys_addr[16+LOG_MODULES-1:16]] <= sys_wdata[ LOG_MODULES-1:0];
          if (sys_addr[16-1:0]==16'h04)    output_select[sys_addr[16+LOG_MODULES-1:16]] <= sys_wdata[ 2-1:0];
          if (sys_addr[16-1:0]==16'h0C)                                            sync <= sys_wdata[MODULES-1:0];
+         if (ARITHMETIC && (sys_addr[16-1:0] == 16'h14) &&
+             (sys_addr[16+LOG_MODULES-1:16] == IIR))
+            arithmetic_input_b_select <= sys_wdata[LOG_MODULES-1:0];
       end
    end
 end
@@ -303,6 +316,15 @@ end else begin
 	  20'h08 : begin sys_ack <= sys_en;          sys_rdata <= {{32- 2{1'b0}},dat_b_saturated,dac_a_saturated}; end
 	  20'h0C : begin sys_ack <= sys_en;          sys_rdata <= {{32-MODULES{1'b0}},sync} ; end
       20'h10 : begin sys_ack <= sys_en;          sys_rdata <= {{32- 14{1'b0}},output_signal[sys_addr[16+LOG_MODULES-1:16]]} ; end
+      20'h14 : begin
+         if (ARITHMETIC && (sys_addr[16+LOG_MODULES-1:16] == IIR)) begin
+            sys_ack <= sys_en;
+            sys_rdata <= {{32-LOG_MODULES{1'b0}}, arithmetic_input_b_select};
+         end else begin
+            sys_ack <= module_ack[sys_addr[16+LOG_MODULES-1:16]];
+            sys_rdata <= module_rdata[sys_addr[16+LOG_MODULES-1:16]];
+         end
+      end
 
      default : begin sys_ack <= module_ack[sys_addr[16+LOG_MODULES-1:16]];    sys_rdata <=  module_rdata[sys_addr[16+LOG_MODULES-1:16]]  ; end
    endcase
@@ -377,11 +399,29 @@ end
 endgenerate
 assign trig_o = trig_signal;
 
-// Keep slot 4 inactive so all later module addresses remain ABI-compatible.
-assign output_direct[IIR] = 14'd0;
-assign output_signal[IIR] = 14'd0;
-assign module_ack[IIR] = sys_en;
-assign module_rdata[IIR] = 32'd0;
+generate if (ARITHMETIC) begin : arithmetic_slot
+   // The arithmetic profile replaces the removed IIR at the same stable address.
+   red_pitaya_arithmetic_block i_arithmetic (
+      .clk_i  (clk_i),
+      .rstn_i (rstn_i),
+      .dat_a_i(input_signal[IIR]),
+      .dat_b_i(arithmetic_input_b),
+      .dat_o  (output_direct[IIR]),
+      .addr   (sys_addr[15:0]),
+      .wen    (sys_wen & (sys_addr[19:16] == IIR)),
+      .ren    (sys_ren & (sys_addr[19:16] == IIR)),
+      .ack    (module_ack[IIR]),
+      .rdata  (module_rdata[IIR]),
+      .wdata  (sys_wdata)
+   );
+   assign output_signal[IIR] = output_direct[IIR];
+end else begin : inactive_iir_slot
+   // Keep slot 4 inactive so all later module addresses remain ABI-compatible.
+   assign output_direct[IIR] = 14'd0;
+   assign output_signal[IIR] = 14'd0;
+   assign module_ack[IIR] = sys_en;
+   assign module_rdata[IIR] = 32'd0;
+end endgenerate
 
 
 //IQ modules

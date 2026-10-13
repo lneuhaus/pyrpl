@@ -84,7 +84,8 @@ module red_pitaya_top #(
    parameter PID_DERIVATIVE = 0,
    parameter PID_FILTERSTAGES = 0,
    parameter PID_DERIVATIVE_FILTER_SHIFT = 4,
-   parameter IQ_VCO = 0
+   parameter IQ_VCO = 0,
+   parameter ARITHMETIC = 0
 ) (
    // PS connections
    inout  [54-1: 0] FIXED_IO_mio       ,
@@ -519,7 +520,8 @@ red_pitaya_dsp #(
   .PID_DERIVATIVE              ( PID_DERIVATIVE              ),
   .PID_FILTERSTAGES            ( PID_FILTERSTAGES            ),
   .PID_DERIVATIVE_FILTER_SHIFT ( PID_DERIVATIVE_FILTER_SHIFT ),
-  .IQ_VCO                      ( IQ_VCO                      )
+  .IQ_VCO                      ( IQ_VCO                      ),
+  .ARITHMETIC                  ( ARITHMETIC                  )
 ) i_dsp (
    // signals
   .clk_i           (  adc_clk                    ),  // clock

@@ -114,6 +114,11 @@ it does not select an FPGA image. See the
 [FPGA profile and test documentation](pyrpl/fpga/README.md#testing-fpga-profiles)
 for staging development builds and testing multiple profiles.
 
+The experimental `arithmetic` profile replaces the IIR with a two-input
+polynomial, multiplier, and protected divider, and enables the band-limited
+PID derivative. Build it with `pyrpl\fpga\make_bin.bat arithmetic`; after
+publishing it, select it with `REDPITAYA_FPGA_PROFILE=arithmetic`.
+
 ## Next steps / documentation
 The full html documentation is hosted at [http://pyrpl-fpga.github.io/pyrpl/](http://pyrpl-fpga.github.io/pyrpl/). Alternatively, you can download a .pdf version at [https://media.readthedocs.org/pdf/pyrpl/latest/pyrpl.pdf](https://media.readthedocs.org/pdf/pyrpl/latest/pyrpl.pdf). We are still in the process of creating an fully up-to-date version of the documentation of the current code. If the current documentation is wrong or insufficient, please post an [issue](https://github.com/pyrpl-fpga/pyrpl/issues/new) and we will prioritize documenting the part of code you need.
 

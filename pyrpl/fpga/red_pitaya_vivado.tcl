@@ -132,7 +132,8 @@ read_verilog                      $path_rtl/red_pitaya_asg.v
 read_verilog                      $path_rtl/red_pitaya_dfilt1.v
 read_verilog                      $path_rtl/red_pitaya_hk.v
 read_verilog                      [rtl_source $path_rtl $rtl_overrides red_pitaya_pid_block.v]
-read_verilog                      [rtl_source $path_rtl $rtl_overrides red_pitaya_dsp.v]
+set dsp_rtl_source [rtl_source $path_rtl $rtl_overrides red_pitaya_dsp.v]
+read_verilog $dsp_rtl_source
 read_verilog                      $path_rtl/red_pitaya_pll.sv
 read_verilog                      $path_rtl/red_pitaya_ps.v
 read_verilog                      [rtl_source $path_rtl $rtl_overrides red_pitaya_pwm.sv]
@@ -143,6 +144,7 @@ read_verilog                      $path_rtl/red_pitaya_top.v
 read_verilog                      $path_rtl/red_pitaya_adv_trigger.v
 read_verilog                      $path_rtl/red_pitaya_saturate.v
 read_verilog                      $path_rtl/red_pitaya_product_sat.v
+read_verilog                      $path_rtl/red_pitaya_arithmetic_block.v
 read_verilog                      $path_rtl/red_pitaya_cordic_block.v
 read_verilog                      [rtl_source $path_rtl $rtl_overrides red_pitaya_iir_block.v]
 read_verilog                      [rtl_source $path_rtl $rtl_overrides red_pitaya_iq_modulator_block.v]
@@ -172,7 +174,6 @@ set synth_args [list -top red_pitaya_top -flatten_hierarchy none -bufg 16 -keep_
 if {[info exists synth_generics] && [llength $synth_generics] > 0} {
     lappend synth_args -generic $synth_generics
 }
-
 # Vivado 2024.2 on Windows occasionally starts synthesis in a helper process
 # that cannot read files from its own installation (most visibly
 # scripts/rt/data/common.tcl). Keep synthesis in the parent process, then

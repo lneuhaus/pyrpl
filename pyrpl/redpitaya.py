@@ -932,6 +932,8 @@ class RedPitaya:
                 )
         if hasattr(self, "cordic") and "cordic_abi" in expected:
             observed["cordic_abi"] = self.cordic.abi_version
+        if hasattr(self, "arithmetic") and "arithmetic_abi" in expected:
+            observed["arithmetic_abi"] = self.arithmetic.abi_version
         if hasattr(self, "iq0") and "iq_vco_abi" in expected:
             observed["iq_vco_abi"] = self.iq0.vco_abi_version
         mismatches = {

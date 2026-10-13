@@ -56,7 +56,8 @@ module red_pitaya_dsp #(
 	parameter PID_DERIVATIVE = 0,
 	parameter PID_FILTERSTAGES = 0,
 	parameter PID_DERIVATIVE_FILTER_SHIFT = 4,
-	parameter IQ_VCO = 0
+	parameter IQ_VCO = 0,
+	parameter ARITHMETIC = 0
 )
 (
    // signals

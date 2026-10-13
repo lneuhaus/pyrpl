@@ -1,0 +1,34 @@
+{
+  "id": "arithmetic",
+  "description": "Two-input polynomial, multiplier, and divider profile with PID derivatives",
+  "abi_version": 1,
+  "capabilities": ["arithmetic", "iq", "pid", "pid_derivative", "three_pids", "pwm"],
+  "hardware_modules": [
+    "HK", "AMS", "Scope", "Sampler", "Asg0", "Asg1",
+    "Pwm", "Pwm", "Arithmetic", "Iq", "Iq", "Iq", "Pid", "Pid", "Pid", "Trig"
+  ],
+  "software_managers": ["Asgs", "Arithmetics", "Iqs", "Pids", "Scopes", "Trigs", "Pwms", "Hks"],
+  "timing": {
+    "arithmetic": {"_delay": 5, "_ratio_delay": 17},
+    "iq": {"_delay": 7, "_quadrature_delay": 4},
+    "pid": {"_delay": 4}
+  },
+  "hardware": {
+    "dsp_inputs": [
+      "in1", "in2", "out1", "out2", "arithmetic", "iq0", "iq1", "iq2", "iq2_2",
+      "pid0", "pid1", "pid2", "asg0", "asg1", "trig", "off"
+    ],
+    "pid_input_filter_stages": 0,
+    "pid_derivative": 1,
+    "pid_derivative_filter_max_shift": 24,
+    "arithmetic_abi": 1095911681
+  },
+  "bitstream": {
+    "filename": "red_pitaya.bin",
+    "sha256": "GENERATED"
+  },
+  "dtbo": {
+    "filename": "red_pitaya.dtbo",
+    "sha256": "GENERATED"
+  }
+}

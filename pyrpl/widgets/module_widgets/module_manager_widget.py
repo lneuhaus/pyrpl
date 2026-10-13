@@ -53,6 +53,10 @@ class AsgManagerWidget(ModuleManagerWidget):
     pass
 
 
+class ArithmeticManagerWidget(ModuleManagerWidget):
+    pass
+
+
 class CordicManagerWidget(ModuleManagerWidget):
     pass
 

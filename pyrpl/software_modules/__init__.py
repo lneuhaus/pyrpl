@@ -23,6 +23,7 @@ from .lockbox import (
 )
 from .loop import Loop, PlotLoop, PlotWindow
 from .module_managers import (
+    Arithmetics,
     Asgs,
     Cordics,
     Hks,
@@ -60,6 +61,7 @@ def get_module(name):
 __all__ = [
     "Module",
     "Asgs",
+    "Arithmetics",
     "Cordics",
     "Iqs",
     "Pids",

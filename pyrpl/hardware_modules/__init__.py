@@ -20,6 +20,7 @@
 there for more information."""
 
 from .ams import AMS
+from .arithmetic import Arithmetic, arithmetic_result
 from .asg import Asg0, Asg1
 from .cordic import Cordic, turns_to_degrees, turns_to_radians
 from .dsp import (

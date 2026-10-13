@@ -6,6 +6,7 @@ member ModuleClass._widget_class specifies which ModuleWidget class should
 be used for the particular ModuleClass.
 """
 
+from .arithmetic_widget import ArithmeticWidget
 from .asg_widget import AsgWidget
 from .base_module_widget import ModuleWidget, ReducedModuleWidget
 from .cordic_widget import CordicWidget
@@ -22,6 +23,7 @@ from .lockbox_widget import (
     StageOutputWidget,
 )
 from .module_manager_widget import (
+    ArithmeticManagerWidget,
     AsgManagerWidget,
     CordicManagerWidget,
     IirManagerWidget,

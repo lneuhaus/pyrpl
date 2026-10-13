@@ -4,8 +4,9 @@ FPGA profiles and hardware tests
 An FPGA profile binds a bitstream to its Python hardware contract: available
 modules, capabilities, register-map constants, and timing metadata. The
 ``default`` profile remains the normal production profile. Specialized images
-such as ``legacy``, ``no_iir``, ``iir32``, ``cordic``, ``cordic_vco``, and the experimental
-``pid_derivative`` profile must be selected explicitly. The ``cordic`` profile
+such as ``legacy``, ``no_iir``, ``iir32``, ``cordic``, ``cordic_vco``,
+``arithmetic``, and the experimental ``pid_derivative`` profile must be
+selected explicitly. The ``cordic`` profile
 replaces the IIR with a standalone two-input phase detector, replaces the
 legacy PFDs in IQ0 and IQ1 with integrated CORDICs, and disables the PID input
 prefilters. IQ2 keeps its PFD and second quadrature output for the network and
@@ -44,6 +45,47 @@ Profile-specific input prefilters continue tracking the input while held.
 Set ``pause_source="off"`` to disable this external control. The existing
 ``paused`` and ``pause_gains`` properties remain available independently.
 The selected expansion pin should be configured as an input through ``rp.hk``.
+
+Arithmetic module
+=================
+
+The ``arithmetic`` profile removes the IIR, keeps the PID input prefilters
+disabled, enables the band-limited PID derivative, and uses DSP slot 4 for a
+two-input arithmetic block. Both inputs can select any routed DSP signal::
+
+    arithmetic = rp.arithmetic
+    arithmetic.input = "in1"
+    arithmetic.input_b = "in2"
+
+Three operations are available::
+
+    # a*x1**p + b*x2**q, with p and q independently equal to 1 or 2
+    arithmetic.setup(
+        operation="polynomial",
+        coefficient_a=1.0,
+        exponent_a=1,
+        coefficient_b=0.5,
+        exponent_b=2,
+    )
+
+    # a*x1*x2
+    arithmetic.operation = "product"
+
+    # a*x1/x2
+    arithmetic.operation = "ratio"
+
+Signals use normalized FPGA units and outputs saturate to the signed 14-bit
+range. Set ``denominator_min`` to the smallest accepted denominator magnitude.
+A smaller denominator saturates a nonzero ratio result and sets the read-only
+``denominator_too_small`` status. Polynomial and product operations have four
+cycles of latency. The divider accepts one input sample on every FPGA clock and
+has sixteen cycles of latency.
+
+``input_delay_a`` and ``input_delay_b`` add zero through seven cycles of delay.
+For an approximate implementation of ``a*x + b*x**2 + c*x'``, configure a PID
+for its proportional and derivative terms, route that PID to the first
+arithmetic input, route ``x`` to the second input, square the second term, and
+delay it to align approximately with the PID path.
 
 CORDIC-controlled VCO
 =====================
@@ -99,7 +141,7 @@ Because the connection and FPGA profile are session-scoped, testing several
 profiles requires separate pytest invocations. PowerShell can run them in
 sequence::
 
-    foreach ($profile in @("default", "legacy", "no_iir", "iir32", "pid_derivative", "cordic", "cordic_vco")) {
+    foreach ($profile in @("default", "legacy", "no_iir", "iir32", "pid_derivative", "arithmetic", "cordic", "cordic_vco")) {
         $env:REDPITAYA_FPGA_PROFILE = $profile
         pytest pyrpl/test/test_hardware_modules
     }
@@ -114,6 +156,10 @@ its binary before testing::
     cd pyrpl/fpga
     make_bin.bat pid_derivative
     python publish_fpga_profile.py pid_derivative
+
+For the arithmetic profile, use ``make_bin.bat arithmetic`` followed by
+``python publish_fpga_profile.py arithmetic``. Its standalone RTL test can be
+run before the full build with ``run_arithmetic_tb.bat``.
 
 For the CORDIC profile, use ``make_bin.bat cordic`` and then
 ``python publish_fpga_profile.py cordic``. Once loaded, ``rp.cordic.input``

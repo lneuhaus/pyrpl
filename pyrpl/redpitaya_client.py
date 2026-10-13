@@ -247,6 +247,15 @@ class DummyClient:  # pragma: no cover
             return 0
         # DSP modules
         for module in DSP_INPUTS:
+            # IIR, CORDIC, and Arithmetic are profile-specific aliases for
+            # the same DSP address. Skip inactive aliases before interpreting
+            # their overlapping module-local register maps.
+            if (
+                self.fpga_profile is not None
+                and module in {"iir", "cordic", "arithmetic"}
+                and module not in self.fpga_profile.hardware.get("dsp_inputs", [])
+            ):
+                continue
             offset = addr - dsp_addr_base(module)
             if module.startswith("pid"):
                 if offset == 0x210:  # DERIVATIVE
@@ -297,6 +306,10 @@ class DummyClient:  # pragma: no cover
             elif module == "cordic" and offset == 0x18:
                 if self.fpga_profile is not None:
                     return self.fpga_profile.hardware.get("cordic_abi", 0)
+                return 0
+            elif module == "arithmetic" and offset == 0x200:
+                if self.fpga_profile is not None:
+                    return self.fpga_profile.hardware.get("arithmetic_abi", 0)
                 return 0
             for filter_module in ["iq", "pid", "iir"]:
                 if module.startswith(filter_module):
