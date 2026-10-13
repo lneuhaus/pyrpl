@@ -176,6 +176,17 @@ jobs:
       shell: bash
       run: echo "PYRPL_USER_DIR=$RUNNER_TEMP/pyrpl_user_dir" >> "$GITHUB_ENV"
 
+    # Curves saved in the default user directory by earlier runs, or by
+    # anything run on the runner outside of this workflow
+    - name: Remove curves left on the runner
+      shell: bash
+      run: |
+        dir="$HOME/pyrpl_user_dir/curve"
+        if [ -d "$dir" ]; then
+          echo "$(find "$dir" -name '*.dat' | wc -l) curves ($(du -sh "$dir" | cut -f1)) in $dir"
+          find "$dir" -name '*.dat' -delete
+        fi
+
     - name: Install system dependencies
       run: |
         sudo apt-get update
