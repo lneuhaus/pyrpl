@@ -12,6 +12,7 @@ from .. import Pyrpl, RedPitaya, global_config
 from ..async_utils import sleep
 from ..directories import default_config_dir, user_config_dir
 from ..pyrpl_utils import time
+from . import frequency_response_artifacts
 
 logger = logging.getLogger(name=__name__)
 
@@ -38,7 +39,19 @@ def _real_board():
     return os.environ.get("REDPITAYA_HOSTNAME", "") not in ("", *SIMULATED_HOSTNAMES)
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--save-plot",
+        action="store_true",
+        default=False,
+        help="save the frequency-response artifacts (data and plots) of the hardware tests "
+        "in .pyrpl_test_results (also PYRPL_SAVE_PLOT=1)",
+    )
+
+
 def pytest_configure(config):
+    if config.getoption("save_plot"):
+        frequency_response_artifacts.SAVE_PLOT = True
     config.addinivalue_line(
         "markers",
         "requires_fpga(*capabilities): skip unless the selected FPGA profile provides them",

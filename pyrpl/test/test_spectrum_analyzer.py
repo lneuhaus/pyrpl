@@ -200,7 +200,8 @@ class TestSpectrumAnalyzer(TestPyrpl):
                     "min_frequency_hz": self.WHITE_NOISE_MIN_FREQUENCY,
                 },
             )
-            logger.info("Saved filtered white-noise response to %s.*", artifact)
+            if artifact is not None:
+                logger.info("Saved filtered white-noise response to %s.*", artifact)
 
             calibrated_variance = fitted_amplitude * noise_nyquist_frequency
             relative_calibration_error = (
@@ -287,7 +288,8 @@ class TestSpectrumAnalyzer(TestPyrpl):
                 "maximum_allowed_absolute_error": maxdiff,
             },
         )
-        logger.info("Saved IQ white-noise response artifacts to %s.*", artifact)
+        if artifact is not None:
+            logger.info("Saved IQ white-noise response artifacts to %s.*", artifact)
         worst_index = int(np.argmax(absolute_error))
         assert diff < maxdiff, (
             diff,
@@ -356,11 +358,12 @@ class TestSpectrumAnalyzer(TestPyrpl):
                 "diagnostic_only": True,
             },
         )
-        logger.info(
-            "Saved IQ-mode diagnostic artifacts to %s.* and %s.*",
-            flatness_artifact,
-            mapping_artifact,
-        )
+        if flatness_artifact is not None:
+            logger.info(
+                "Saved IQ-mode diagnostic artifacts to %s.* and %s.*",
+                flatness_artifact,
+                mapping_artifact,
+            )
 
         assert np.isfinite(peak_powers).all()
         assert np.isfinite(detected_frequencies).all()

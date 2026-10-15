@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 
+from pyrpl.test import frequency_response_artifacts
 from pyrpl.test.frequency_response_artifacts import fit_residual_delay
 
 
@@ -31,3 +32,29 @@ def test_fit_residual_delay_ignores_response_zeros():
 
     assert fit["points_used"] == frequencies.size - 1
     assert fit["delay_seconds"] == pytest.approx(delay, rel=1e-10)
+
+
+def test_artifacts_are_not_saved_by_default(tmp_path, monkeypatch):
+    monkeypatch.setenv("PYRPL_RESPONSE_RESULTS_DIR", str(tmp_path))
+    monkeypatch.setattr(frequency_response_artifacts, "SAVE_PLOT", False)
+    frequencies = np.linspace(1, 10, 5)
+    assert (
+        frequency_response_artifacts.save_frequency_response(
+            "nothing", frequencies, frequencies, frequencies
+        )
+        is None
+    )
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_artifacts_are_saved_when_enabled(tmp_path, monkeypatch):
+    monkeypatch.setenv("PYRPL_RESPONSE_RESULTS_DIR", str(tmp_path))
+    monkeypatch.setenv("PYRPL_BITSTREAM_LABEL", "label")
+    monkeypatch.setattr(frequency_response_artifacts, "SAVE_PLOT", True)
+    frequencies = np.linspace(1, 10, 5)
+    stem = frequency_response_artifacts.save_frequency_response(
+        "response", frequencies, frequencies, 2 * frequencies
+    )
+    assert stem == tmp_path / "label" / "response"
+    for suffix in (".npz", ".csv", ".json", ".png"):
+        assert stem.with_suffix(suffix).is_file()

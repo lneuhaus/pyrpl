@@ -8,6 +8,11 @@ from pathlib import Path
 
 import numpy as np
 
+# Saving the artifacts (NPZ, CSV, JSON and a PNG per call, tens of MB for a
+# spectrum) is slow and heavy for the CI runner: off by default. Enable it to
+# debug tests locally with ``pytest --save-plot`` or ``PYRPL_SAVE_PLOT=1``.
+SAVE_PLOT = os.environ.get("PYRPL_SAVE_PLOT", "").lower() in ("1", "true", "yes")
+
 
 def fit_residual_delay(frequencies, measured, reference, minimum_relative_magnitude=1e-3):
     """Fit a pure delay between a measured and reference transfer function.
@@ -49,9 +54,7 @@ def fit_residual_delay(frequencies, measured, reference, minimum_relative_magnit
         measured_floor = minimum_relative_magnitude * np.max(measured_magnitude[finite])
         reference_floor = minimum_relative_magnitude * np.max(reference_magnitude[finite])
         valid = (
-            finite
-            & (measured_magnitude > measured_floor)
-            & (reference_magnitude > reference_floor)
+            finite & (measured_magnitude > measured_floor) & (reference_magnitude > reference_floor)
         )
     else:
         valid = finite
@@ -119,6 +122,8 @@ def _json_default(value):
 def save_frequency_response(name, frequencies, measured, theory, metadata=None):
     """Save numeric data, summary statistics, and a comparison plot.
 
+    Nothing is saved, and None is returned, unless SAVE_PLOT is True.
+
     ``PYRPL_BITSTREAM_LABEL`` selects the subdirectory used for a run, for
     example ``old`` or ``new``. ``PYRPL_RESPONSE_RESULTS_DIR`` can override
     the default ``.pyrpl_test_results/frequency_response`` output directory.
@@ -128,6 +133,8 @@ def save_frequency_response(name, frequencies, measured, theory, metadata=None):
     theory = np.asarray(theory, dtype=complex)
     if not (frequencies.shape == measured.shape == theory.shape):
         raise ValueError("frequencies, measured and theory must have the same shape")
+    if not SAVE_PLOT:
+        return None
 
     difference = measured - theory
     absolute_error = np.abs(difference)

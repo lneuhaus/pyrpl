@@ -396,7 +396,8 @@ class TestIir(TestPyrpl):
                     "module_delay_cycles": module._delay,
                 },
             )
-            logger.info("Saved IIR response artifacts to %s.*", artifact)
+            if artifact is not None:
+                logger.info("Saved IIR response artifacts to %s.*", artifact)
             relative_error_failed = maxerror > eth
             normalized_absolute_error_failed = (
                 normalized_absolute_threshold is not None

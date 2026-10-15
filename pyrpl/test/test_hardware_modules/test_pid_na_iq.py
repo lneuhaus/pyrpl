@@ -493,7 +493,8 @@ class TestPidNaIq(TestPyrpl):
                         "gain": bpf.gain,
                     },
                 )
-                logger.info("Saved IQ response artifacts to %s.*", artifact)
+                if artifact is not None:
+                    logger.info("Saved IQ response artifacts to %s.*", artifact)
                 # relerror = np.abs((data - theory) / theory)
                 # maxerror = np.max(relerror)
                 if maxerror > error_threshold:
@@ -812,7 +813,8 @@ class TestPidNaIq(TestPyrpl):
                     "error_kind": "relative_complex",
                 },
             )
-            logger.info("Saved derivative response artifacts to %s.*", artifact)
+            if artifact is not None:
+                logger.info("Saved derivative response artifacts to %s.*", artifact)
             assert np.max(relative_error) < error_threshold
 
             pid.p = 0
