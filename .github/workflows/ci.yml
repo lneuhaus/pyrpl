@@ -119,7 +119,7 @@ jobs:
   # self-hosted Oracle runner so its IP can stay allowlisted on the Freebox
   # (GitHub-hosted runners have rotating IPs and can't be pinned like this).
   hardware:
-    name: Hardware tests (Python ${{ matrix.python-version }})
+    name: Hardware tests (${{ matrix.profile }})
     needs: check-board
     if: needs.check-board.outputs.available == 'true'
     runs-on: [self-hosted]
@@ -127,11 +127,43 @@ jobs:
     concurrency:
       group: redpitaya-hardware
       cancel-in-progress: false
+    # One job per FPGA profile, one after the other. The default profile
+    # runs all hardware tests; the other profiles only the test files of the
+    # features they add or change (requires_fpga markers skip the rest), plus
+    # the register map. The legacy profile is not tested.
     strategy:
+      fail-fast: false
+      max-parallel: 1
       matrix:
-        # The hardware tests run on a single Python version: the other
-        # versions are covered by the unit job.
-        python-version: ['3.13']
+        include:
+          - profile: default
+            tests: pyrpl/test/
+          - profile: arithmetic
+            tests: >-
+              pyrpl/test/test_hardware_modules/test_arithmetic.py
+              pyrpl/test/test_hardware_modules/test_pid_na_iq.py
+              pyrpl/test/test_registers.py
+          - profile: cordic
+            tests: >-
+              pyrpl/test/test_hardware_modules/test_cordic.py
+              pyrpl/test/test_registers.py
+          - profile: cordic_vco
+            tests: >-
+              pyrpl/test/test_hardware_modules/test_cordic.py
+              pyrpl/test/test_hardware_modules/test_pid_na_iq.py
+              pyrpl/test/test_registers.py
+          - profile: iir32
+            tests: >-
+              pyrpl/test/test_hardware_modules/test_na_iir_pytest.py
+              pyrpl/test/test_registers.py
+          - profile: no_iir
+            tests: >-
+              pyrpl/test/test_hardware_modules/test_pid_na_iq.py
+              pyrpl/test/test_registers.py
+          - profile: pid_derivative
+            tests: >-
+              pyrpl/test/test_hardware_modules/test_pid_na_iq.py
+              pyrpl/test/test_registers.py
     # A degraded remote hardware connection must not monopolize the only
     # physical Red Pitaya runner indefinitely. Normal runs take about 7 min.
     timeout-minutes: 30
@@ -146,13 +178,19 @@ jobs:
       REDPITAYA_PORT: ${{ secrets.REDPITAYA_MONITOR_PORT }}
       REDPITAYA_USER: ${{ secrets.REDPITAYA_USER }}
       REDPITAYA_PASSWORD: ${{ secrets.REDPITAYA_PASSWORD }}
+      # FPGA profile loaded by the test session (see pyrpl/test/conftest.py)
+      REDPITAYA_FPGA_PROFILE: ${{ matrix.profile }}
+      # The hardware tests run on a single Python version: the other
+      # versions are covered by the unit job.
+      PYTHON_VERSION: "3.13"
+      TESTS: ${{ matrix.tests }}
     steps:
     - uses: actions/checkout@v6
 
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
       uses: actions/setup-python@v6
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Set up uv
       uses: astral-sh/setup-uv@v10.2.0
@@ -193,7 +231,7 @@ jobs:
         sudo apt-get install -y qtbase5-dev qt5-qmake
 
     - name: Install Python dependencies
-      run: uv sync --locked --python ${{ matrix.python-version }} --extra test --extra qt-pyqt5
+      run: uv sync --locked --python ${{ env.PYTHON_VERSION }} --extra test --extra qt-pyqt5
 
     - name: Register Jupyter kernel
       run: uv run --no-sync python -m ipykernel install --sys-prefix --name python3
@@ -247,9 +285,9 @@ jobs:
         # Connection parameters come from the test job's REDPITAYA_* variables.
         cp ./remote_global_config.yml ./pyrpl/config/global_config.yml
         echo "==========================================="
-        echo "Running full test suite (attempt 1/3)"
+        echo "Running the tests of profile $REDPITAYA_FPGA_PROFILE (attempt 1/3): $TESTS"
         echo "==========================================="
-        if uv run --no-sync python -m pytest pyrpl/test/ -m hardware --timeout=600 --cov=pyrpl --cov-report=xml; then
+        if uv run --no-sync python -m pytest $TESTS -m hardware --timeout=600 --cov=pyrpl --cov-report=xml; then
           echo "All tests passed!"
           exit 0
         fi
@@ -258,7 +296,7 @@ jobs:
         echo "==========================================="
         echo "Re-running failed tests (attempt 2/3)"
         echo "==========================================="
-        if uv run --no-sync python -m pytest pyrpl/test/ -m hardware --timeout=600 --lf --cov=pyrpl --cov-report=xml --cov-append; then
+        if uv run --no-sync python -m pytest $TESTS -m hardware --timeout=600 --lf --cov=pyrpl --cov-report=xml --cov-append; then
           echo "All previously failed tests passed!"
           exit 0
         fi
@@ -267,7 +305,7 @@ jobs:
         echo "==========================================="
         echo "Final retry (attempt 3/3)"
         echo "==========================================="
-        uv run --no-sync python -m pytest pyrpl/test/ -m hardware --timeout=600 --lf --cov=pyrpl --cov-report=xml --cov-append
+        uv run --no-sync python -m pytest $TESTS -m hardware --timeout=600 --lf --cov=pyrpl --cov-report=xml --cov-append
 
       env:
         QT_QPA_PLATFORM: offscreen
@@ -276,7 +314,7 @@ jobs:
       uses: codecov/codecov-action@v6
       with:
         files: ./coverage.xml
-        flags: hardware
+        flags: hardware-${{ matrix.profile }}
         use_oidc: true
 
     - name: Stop test processes
