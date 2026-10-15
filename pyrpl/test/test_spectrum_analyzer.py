@@ -1,5 +1,6 @@
 import contextlib
 import logging
+import traceback
 
 import numpy as np
 import pytest
@@ -79,14 +80,29 @@ class TestSpectrumAnalyzer(TestPyrpl):
         self.sa.continuous()
         sleep(0.1)
         assert self.sa.running_state == "running_continuous"
-        old = self.pyrpl.c._save_counter
-        for _i in range(10):
-            sleep(0.01)
-            APP.processEvents()
-        new = self.pyrpl.c._save_counter
+        # record where each save during the measurement comes from, so that a
+        # failure names the attribute that was written
+        tree = self.pyrpl.c
+        saves = []
+        original_save = tree._save
+
+        def recording_save(*args, **kwargs):
+            stack = traceback.format_stack(limit=16)[:-1]
+            saves.append("".join(frame for frame in stack if "pyrpl" in frame))
+            return original_save(*args, **kwargs)
+
+        object.__setattr__(tree, "_save", recording_save)
+        try:
+            old = tree._save_counter
+            for _i in range(10):
+                sleep(0.01)
+                APP.processEvents()
+            new = tree._save_counter
+        finally:
+            del tree.__dict__["_save"]
         self.sa.stop()
         assert self.sa.running_state == "stopped"
-        assert old == new, (old, new)
+        assert old == new, (old, new, "\n".join(saves))
 
     @pytest.mark.parametrize("span", [5e4, 1e5, 5e5, 1e6, 2e6])
     def test_baseband_tone_calibration(self, span):
