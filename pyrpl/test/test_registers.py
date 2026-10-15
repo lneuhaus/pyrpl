@@ -139,6 +139,7 @@ class TestRegisters(TestRedpitaya):
                 in [
                     "pfd_integral",
                     "cordic_phase",
+                    "current_output_signal",
                     "cordic_abi_version",
                     "ch1_firstpoint",
                     "ch2_firstpoint",
@@ -154,6 +155,9 @@ class TestRegisters(TestRedpitaya):
                 return
             # write something different and confirm change
             write = 10000000000.0 if value == 0 else 0
+            if reg.min > 0:
+                # 0 would be saturated to the minimum, e.g. arithmetic.denominator_min
+                write = reg.max if value != reg.max else reg.min
             module.__setattr__(regkey, write)
             if value == module.__getattribute__(regkey):
                 raise AssertionError()

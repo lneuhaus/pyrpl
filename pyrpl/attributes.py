@@ -1288,6 +1288,12 @@ class SelectProperty(BaseProperty):
     def validate_and_normalize(self, obj, value):
         options = self.options(obj)
         if value not in options:
+            # The GUI (a combo box) and text configuration files give the
+            # option as a string, e.g. "2" for the option 2.
+            matches = [option for option in options if str(option) == str(value)]
+            if len(matches) == 1:
+                value = matches[0]
+        if value not in options:
             msg = (
                 f"Value '{value}' is not an option for SelectAttribute {self.name} of "
                 f"module {obj.name} with options {options}"
